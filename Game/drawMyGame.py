@@ -1,30 +1,41 @@
 import pygame
 import sys
+import csv
+import os
 
-
+# Ziel: Z; Spiel: X; Start: S; Border: R
 GRID_SIZE = 32
-CELL_SIZE = 32
-WINDOW_SIZE = GRID_SIZE * CELL_SIZE
-MARK_COLOR = (255, 0, 0)  # Red color
-BG_COLOR = (255, 255, 255)  # White color
-LINE_COLOR = (0, 0, 0)  # Black color
+GRID_WIDTH = 32
+GRID_HEIGHT = 30
+CELL_SIZE = 20
 
-#Boarder R
-#grid = [[None for _ in range(GRID_SIZE)] for _ in range(GRID_SIZE)]
-grid = [[None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'Z'], [None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'Z'], [None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'Z'], [None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'Z'], [None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'Z'], [None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'Z'], [None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', None, None, None, None, None, None, None], [None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', None, None, None, None, None, None, None, None], [None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', None, None, None, None, None, None, None, None], [None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', None, None, None, None, None, None, None, None], [None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', None, None, None, None, None, None, None, None], [None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', None, None, None, None, None, None, None, None], [None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', None, None, None, None, None, None, None, None], [None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', None, None, None, None, None, None, None, None], [None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', None, None, None, None, None, None, None, None], [None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', None, None, None, None, None, None, None, None], [None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', None, None, None, None, None, None, None, None], [None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', None, None, None, None, None, None, None, None], [None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', None, None, None, None, None, None, None, None], [None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', None, None, None, None, None, None, None, None], [None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', None, None, None, None, None, None, None, None], [None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', None, None, None, None, None, None, None, None], [None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, 'X', 'X', 'X', 'X', 'X', 'X', 'X', None, None, None, None, None, None, None, None], [None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, 'X', 'X', 'X', 'X', 'X', 'X', 'X', None, None, None, None, None, None, None, None], [None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, 'X', 'X', 'X', 'X', 'X', 'X', 'X', None, None, None, None, None, None, None, None], [None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, 'X', 'X', 'X', 'X', 'X', 'X', 'X', None, None, None, None, None, None, None, None], [None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, 'X', 'X', 'X', 'X', 'X', 'X', 'X', None, None, None, None, None, None, None, None], [None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, 'X', 'X', 'X', 'X', 'X', 'X', 'X', None, None, None, None, None, None, None, None], [None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, 'X', 'X', 'X', 'X', 'X', 'X', 'X', None, None, None, None, None, None, None, None], [None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, 'X', 'X', 'X', 'X', 'X', 'X', None, None, None, None, None, None, None, None], [None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, 'X', 'X', 'X', 'X', 'X', 'X', None, None, None, None, None, None, None, None], [None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, 'S', 'S', 'S', 'S', 'S', 'S', None, None, None, None, None, None, None, None]]
+SPIEL_COLOR = (255, 255, 255)  # White
+RAND_COLOR = (70, 79, 81)
+START_COLOR = (143, 227, 136)
+ZIEL_COLOR = (219, 80, 74)
+LINE_COLOR = (0, 0, 0)  # Black
+
+# Board
+grid = [["R" for _ in range(GRID_WIDTH)] for _ in range(GRID_HEIGHT)]
+
 
 def draw_grid(screen):
-    screen.fill(BG_COLOR)
-    for row in range(GRID_SIZE):
-        for col in range(GRID_SIZE):
+    screen.fill(RAND_COLOR)
+    for row in range(GRID_HEIGHT):
+        for col in range(GRID_WIDTH):
             rect = pygame.Rect(col * CELL_SIZE, row * CELL_SIZE, CELL_SIZE, CELL_SIZE)
             pygame.draw.rect(screen, LINE_COLOR, rect, 1)
-            if grid[row][col] is not None:
-                pygame.draw.circle(screen, MARK_COLOR, rect.center, CELL_SIZE // 4)
+            if grid[row][col] == "X":
+                pygame.draw.circle(screen, SPIEL_COLOR, rect.center, CELL_SIZE // 4)
+            elif grid[row][col] == "S":
+                pygame.draw.circle(screen, START_COLOR, rect.center, CELL_SIZE // 4)
+            elif grid[row][col] == "Z":
+                pygame.draw.circle(screen, ZIEL_COLOR, rect.center, CELL_SIZE // 4)
+
 
 def main():
     pygame.init()
-    screen = pygame.display.set_mode((WINDOW_SIZE, WINDOW_SIZE))
+    screen = pygame.display.set_mode((GRID_WIDTH * CELL_SIZE, GRID_HEIGHT * CELL_SIZE))
     pygame.display.set_caption("2D Grid with Mouse Interaction")
 
     while True:
@@ -36,16 +47,37 @@ def main():
                 x, y = event.pos
                 col = x // CELL_SIZE
                 row = y // CELL_SIZE
-                if grid[row][col] is None:
-                    grid[row][col] = 'R'
+                if grid[row][col] == "R":
+                    grid[row][col] = "X"
+                elif grid[row][col] == "X":
+                    grid[row][col] = "S"
+                elif grid[row][col] == "S":
+                    grid[row][col] = "Z"
                 else:
-                    grid[row][col] = None
+                    grid[row][col] = "R"
 
         draw_grid(screen)
         pygame.display.flip()
 
+
+def save_grid(filename, grid):
+    with open(filename, mode="w", newline="", encoding="utf-8") as file:
+        writer = csv.writer(file)
+        for row in grid:
+            writer.writerow(row)
+    print(f"Saved to {filename}")
+
+
 if __name__ == "__main__":
     try:
         main()
+        # Topology 1
+        # grid = [['R', 'R', 'R', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'Z'], ['R', 'R', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'Z'], ['R', 'R', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'Z'], ['R', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'Z'], ['X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'Z'], ['X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'Z'], ['X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'R', 'R', 'R', 'R', 'R', 'R', 'R'], ['X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R'], ['X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R'], ['X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R'], ['X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R'], ['X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R'], ['X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R'], ['X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R'], ['R', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R'], ['R', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R'], ['R', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R'], ['R', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R'], ['R', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R'], ['R', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R'], ['R', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R'], ['R', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R'], ['R', 'R', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R'], ['R', 'R', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R'], ['R', 'R', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R'], ['R', 'R', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R'], ['R', 'R', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R'], ['R', 'R', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R'], ['R', 'R', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R'], ['R', 'R', 'R', 'X', 'X', 'X', 'X', 'X', 'X', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R'], ['R', 'R', 'R', 'X', 'X', 'X', 'X', 'X', 'X', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R'], ['R', 'R', 'R', 'S', 'S', 'S', 'S', 'S', 'S', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R']]
+        # save_grid(os.path.join(os.getcwd(), "topology1.csv"), grid)
+
+        # Topology 2
+        # grid = [['R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'Z'], ['R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'Z'], ['R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'Z'], ['R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'Z'], ['R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'Z'], ['R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'Z'], ['R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'Z'], ['R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'Z'], ['R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'Z'], ['R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'R', 'R'], ['R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'R', 'R', 'R', 'R', 'R'], ['R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'R', 'R', 'R', 'R', 'R', 'R'], ['R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R'], ['R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R'], ['R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R'], ['R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R'], ['R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R'], ['R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R'], ['R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R'], ['R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R'], ['R', 'R', 'R', 'R', 'R', 'R', 'R', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R'], ['R', 'R', 'R', 'R', 'R', 'R', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R'], ['R', 'R', 'R', 'R', 'R', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R'], ['R', 'R', 'R', 'R', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R'], ['R', 'R', 'R', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R'], ['R', 'R', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R'], ['R', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R'], ['X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R'], ['X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R'], ['S', 'S', 'S', 'S', 'S', 'S', 'S', 'S', 'S', 'S', 'S', 'S', 'S', 'S', 'S', 'S', 'S', 'S', 'S', 'S', 'S', 'S', 'S', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R']]
+        # save_grid(os.path.join(os.getcwd(), "topology2.csv"), grid)
+
     except:
         print(grid)

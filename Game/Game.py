@@ -7,7 +7,22 @@ class Game:
     speed = {"x": 0, "y": 0}
     position = {"x": None, "y": None}
     action = {"x": Action, "y": Action}
-    actions = {"acceleration": Action.acceleration, "hold": Action.hold, "slow": Action.slow}
+    actions = [
+        (Action.B, Action.B),
+        (Action.B, Action.H),
+        (Action.B, Action.V),
+        (Action.H, Action.B),
+        (Action.H, Action.H),
+        (Action.H, Action.V),
+        (Action.V, Action.B),
+        (Action.V, Action.H),
+        (Action.V, Action.V),
+    ]
+    # actions = {
+    #     "acceleration": Action.acceleration,
+    #     "hold": Action.hold,
+    #     "slow": Action.slow,
+    # }
     timestep = 0
     map = None
 
@@ -20,7 +35,10 @@ class Game:
         self.screen = Screen(self.map)
 
     def set_position(self):
-        self.position = {"x": self.position.x + self.speed.x, "y": self.position.y + self.speed.y}
+        self.position = {
+            "x": self.position.x + self.speed.x,
+            "y": self.position.y + self.speed.y,
+        }
 
     def check_for_collision(self):
         pass
@@ -35,7 +53,9 @@ class Game:
     def update_player(self):
         self.screen.show_player()
 
-g = Game(2,1)
+
+g = Game(2, 1)
 g.update_screen()
 import time
+
 time.sleep(25)

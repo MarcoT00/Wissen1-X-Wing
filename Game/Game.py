@@ -34,29 +34,43 @@ class Game:
             self.position = Topology.getStartingPos(self.map, 1, 1)
         self.screen = Screen(self.map)
 
-    def set_position(self):
+    def change_position(self):
         self.position = {
             "x": self.position.x + self.speed.x,
             "y": self.position.y + self.speed.y,
         }
 
-    def check_for_collision(self):
+    def is_collide(self):
+        new_position = {
+            "x": self.position.x + self.speed.x,
+            "y": self.position.y + self.speed.y,
+        }
+        return not (0 <= new_position.x and len(map[0]) < new_position.x and 0 <= new_position.y and len(map) < new_position.y and map[new_position.x][new_position.y] != 'R')
+
+    def fix_position(self):
+        x_steps = self.speed.x
+        y_steps = self.speed.y
         pass
 
-    def control(self, action: tuple, speed: dict):
-        self.timestep += 1
+    def change_speed(self, action: tuple):
         match action[0]:
             case Action.B:
-                speed["x"] += 1
+                self.speed["x"] += 1
             case Action.V:
-                speed["x"] -= 1
+                self.speed["x"] -= 1
         match action[1]:
             case Action.B:
-                speed["y"] += 1
+                self.speed["y"] += 1
             case Action.V:
-                speed["y"] -= 1
+                self.speed["y"] -= 1
 
-        action(speed)
+    def change_state(self, action: tuple):
+        self.timestep += 1
+        self.change_speed(action)
+        if not self.is_collide():
+            self.change_position()
+        else:
+            self.fix_position()
 
     def update_screen(self):
         self.screen.show_map()

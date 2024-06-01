@@ -18,11 +18,7 @@ class Game:
         (Action.V, Action.H),
         (Action.V, Action.V),
     ]
-    # actions = {
-    #     "acceleration": Action.acceleration,
-    #     "hold": Action.hold,
-    #     "slow": Action.slow,
-    # }
+
     timestep = 0
     map = None
 
@@ -85,7 +81,7 @@ class Game:
         self.screen.show_player()
 
 
-g = Game(2, 1)
+g = Game(1, 1)
 g.update_screen()
 import time
 

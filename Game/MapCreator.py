@@ -70,4 +70,5 @@ def save_grid(filename, grid):
 
 if __name__ == "__main__":
     main()
+    # savegrid("topology1.csv", grid)
     # print(grid)

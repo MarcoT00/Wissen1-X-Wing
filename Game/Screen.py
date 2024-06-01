@@ -3,7 +3,7 @@ import sys
 
 
 class Screen:
-    CELL_SIZE = 32
+    CELL_SIZE = 24
     X_SIZE = None
     Y_SIZE = None
     MARK_COLOR = (255, 0, 0)  # Red color
@@ -21,7 +21,9 @@ class Screen:
         pygame.init()
         self.X_SIZE = len(map[0])
         self.Y_SIZE = len(map)
-        self.screen = pygame.display.set_mode((self.X_SIZE * self.CELL_SIZE, self.Y_SIZE * self.CELL_SIZE))
+        self.screen = pygame.display.set_mode(
+            (self.X_SIZE * self.CELL_SIZE, self.Y_SIZE * self.CELL_SIZE)
+        )
 
     def show_map(self):
         self.draw_grid(self.screen)
@@ -43,13 +45,21 @@ class Screen:
         rect = self.get_rect(row, col)
         if self.grid[row][col] is not None:
             if self.grid[row][col] == "X":
-                pygame.draw.circle(screen, self.SPIEL_COLOR, rect.center, self.CELL_SIZE // 4)
+                pygame.draw.circle(
+                    screen, self.SPIEL_COLOR, rect.center, self.CELL_SIZE // 4
+                )
             elif self.grid[row][col] == "Z":
-                pygame.draw.circle(screen, self.ZIEL_COLOR, rect.center, self.CELL_SIZE // 4)
+                pygame.draw.circle(
+                    screen, self.ZIEL_COLOR, rect.center, self.CELL_SIZE // 4
+                )
             elif self.grid[row][col] == "S":
-                pygame.draw.circle(screen, self.START_COLOR, rect.center, self.CELL_SIZE // 4)
+                pygame.draw.circle(
+                    screen, self.START_COLOR, rect.center, self.CELL_SIZE // 4
+                )
             elif self.grid[row][col] == "R":
-                pygame.draw.circle(screen, self.RAND_COLOR, rect.center, self.CELL_SIZE // 4)
+                pygame.draw.circle(
+                    screen, self.RAND_COLOR, rect.center, self.CELL_SIZE // 4
+                )
 
     def draw_player(self, screen, position: dict):
         row = position.x
@@ -59,4 +69,6 @@ class Screen:
             pygame.draw.circle(screen, (0, 255, 255), rect.center, self.CELL_SIZE // 4)
 
     def get_rect(self, row, col):
-        return pygame.Rect(col * self.CELL_SIZE, row * self.CELL_SIZE, self.CELL_SIZE, self.CELL_SIZE)
+        return pygame.Rect(
+            col * self.CELL_SIZE, row * self.CELL_SIZE, self.CELL_SIZE, self.CELL_SIZE
+        )

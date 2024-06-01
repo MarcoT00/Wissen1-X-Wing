@@ -12,11 +12,10 @@ class Game:
     map = None
 
     def __init__(self, selected_map, starting_pos):
+        self.map = Topology.get_map(selected_map)
         if selected_map == 1:
-            self.map = Topology.map1
             self.position = Topology.getStartingPos(self.map, 1, 1)
         elif selected_map == 2:
-            self.map = Topology.map2
             self.position = Topology.getStartingPos(self.map, 1, 1)
         self.screen = Screen(self.map)
 
@@ -36,4 +35,7 @@ class Game:
     def update_player(self):
         self.screen.show_player()
 
-
+g = Game(2,1)
+g.update_screen()
+import time
+time.sleep(25)

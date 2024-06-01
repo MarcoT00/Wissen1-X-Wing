@@ -6,7 +6,7 @@ from Screen import Screen
 class Game:
     speed = {"x": 0, "y": 0}
     position = {"x": None, "y": None}
-    action = {"x": Action, "y": Action}
+    action = None
     actions = [
         (Action.B, Action.B),
         (Action.B, Action.H),
@@ -45,7 +45,13 @@ class Game:
             "x": self.position.x + self.speed.x,
             "y": self.position.y + self.speed.y,
         }
-        return not (0 <= new_position.x and len(map[0]) < new_position.x and 0 <= new_position.y and len(map) < new_position.y and map[new_position.x][new_position.y] != 'R')
+        return not (
+            0 <= new_position.x
+            and len(map[0]) < new_position.x
+            and 0 <= new_position.y
+            and len(map) < new_position.y
+            and map[new_position.x][new_position.y] != "R"
+        )
 
     def fix_position(self):
         x_steps = self.speed.x

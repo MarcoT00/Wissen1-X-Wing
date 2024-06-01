@@ -43,8 +43,19 @@ class Game:
     def check_for_collision(self):
         pass
 
-    def control(self, action, speed):
+    def control(self, action: tuple, speed: dict):
         self.timestep += 1
+        match action[0]:
+            case Action.B:
+                speed["x"] += 1
+            case Action.V:
+                speed["x"] -= 1
+        match action[1]:
+            case Action.B:
+                speed["y"] += 1
+            case Action.V:
+                speed["y"] -= 1
+
         action(speed)
 
     def update_screen(self):

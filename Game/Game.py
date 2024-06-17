@@ -2,6 +2,7 @@ from Topology import Topology
 from Screen import Screen
 import itertools
 import time
+import random
 
 
 class Game:
@@ -23,7 +24,7 @@ class Game:
     # Params that change during each episode
     timestep = 0
     velocity = {"x": 0, "y": 0}
-    position = {"x": None, "y": None}
+    pos = {"x": None, "y": None}
     episode_cost = 0
     episode = []  # sequence of positions and actions that the agent takes
     screen = None
@@ -32,8 +33,8 @@ class Game:
         self.MAP = Topology.get_map(map_id)
         self.START_POS = Topology.get_start_pos(map_id, start_pos_index)
 
-        self.position = self.START_POS
-        self.episode.append(self.position)
+        self.pos = self.START_POS
+        self.episode.append(self.pos)
         self.screen = Screen(self.MAP)
 
     def episode_reset(
@@ -44,9 +45,9 @@ class Game:
         """
         self.timestep = 0
         self.velocity = {"x": 0, "y": 0}
-        self.position = self.START_POS
+        self.pos = self.START_POS
         self.episode_cost = 0
-        self.episode = [self.position]
+        self.episode = [self.pos]
 
     def change_state(self, selected_action: tuple):
         self.timestep += 1
@@ -57,14 +58,18 @@ class Game:
         # Get possible routes and movement sequences when moving with the new velocity
         possible_routes, possible_movement_sequences = (
             self.get_possible_routes_and_movement_sequences(
-                current_position=self.position, velocity=new_velocity
+                current_pos=self.pos, velocity=new_velocity
             )
         )
 
-        escape_is_possible, escape_position = self.check_escape(possible_routes)
+        escape_is_possible, escape_pos = self.check_escape(possible_routes)
         if escape_is_possible:
             self.velocity = new_velocity
-            self.position = escape_position
+            self.pos = self.get_new_pos(
+                velocity=new_velocity,
+                escape_is_possible=True,
+                escape_pos=escape_pos,
+            )
             self.episode_cost += 1
         elif self.collision_is_certain(possible_routes):
             while self.collision_is_certain(possible_routes):
@@ -73,19 +78,26 @@ class Game:
                 )
                 possible_routes, possible_movement_sequences = (
                     self.get_possible_routes_and_movement_sequences(
-                        current_position=self.position,
+                        current_pos=self.pos,
                         velocity=velocity_after_collision,
                     )
                 )
-            self.position = self.get_new_position(velocity_after_collision)
+            self.velocity = velocity_after_collision
+            self.pos = self.get_new_pos(
+                velocity=velocity_after_collision,
+                escape_is_possible=False,
+                escape_pos=None,
+            )
             self.episode_cost += 1 + 5
         else:
             self.velocity = new_velocity
-            self.position = self.get_new_position(self.velocity)
+            self.pos = self.get_new_pos(
+                velocity=new_velocity, escape_is_possible=False, escape_pos=None
+            )
             self.episode_cost += 1
 
         self.episode.append(selected_action)
-        self.episode.append(self.position)
+        self.episode.append(self.pos)
 
     def get_velocity_after_collision(self, possible_movement_sequences: list):
         # Each elem of each sequence is one of the following types:
@@ -130,7 +142,7 @@ class Game:
                 return False
         return True
 
-    def get_possible_routes_and_movement_sequences(self, current_position, velocity):
+    def get_possible_routes_and_movement_sequences(self, current_pos, velocity):
         """
         Route: sequence of cells until no movement left or the agent has reached R or Z
         """
@@ -154,22 +166,22 @@ class Game:
         for movement_seq in available_movement_sequences:
             route = [
                 (
-                    current_position,
-                    self.MAP[current_position["y"]][current_position["x"]],
+                    current_pos,
+                    self.MAP[current_pos["y"]][current_pos["x"]],
                 )
             ]
             possible_movement_seq = []
 
             for movement in movement_seq:
-                next_position = {
+                next_pos = {
                     "x": route[-1][0]["x"],
                     "y": route[-1][0]["y"],
                 }
-                next_position[movement[0]] = next_position[movement[0]] + movement[1]
-                next_position_type = self.MAP[next_position["y"]][next_position["x"]]
-                route.append((next_position, next_position_type))
+                next_pos[movement[0]] = next_pos[movement[0]] + movement[1]
+                next_pos_type = self.MAP[next_pos["y"]][next_pos["x"]]
+                route.append((next_pos, next_pos_type))
                 possible_movement_seq.append(movement)
-                if next_position_type in ["R", "Z"]:
+                if next_pos_type in ["R", "Z"]:
                     break
 
             possible_routes.append(route)
@@ -177,11 +189,27 @@ class Game:
 
         return possible_routes, possible_movement_sequences
 
-    def get_new_position(self, velocity: dict):
-        return {
-            "x": self.position["x"] + velocity["x"],
-            "y": self.position["y"] - velocity["y"],
-        }
+    def get_new_pos(self, velocity: dict, escape_is_possible: bool, escape_pos: dict):
+        if random.random() < 0.5:
+            x_move = velocity["x"] / abs(velocity["x"]) if velocity["x"] != 0 else 0
+            y_move = velocity["y"] / abs(velocity["y"]) if velocity["y"] != 0 else 0
+            if x_move != 0 and y_move != 0:
+                if random.random() < 0.5:
+                    x_move = 0
+                else:
+                    y_move = 0
+            return {
+                "x": self.pos["x"] + x_move,
+                "y": self.pos["y"] - y_move,
+            }
+        else:
+            if escape_is_possible:
+                return escape_pos
+            else:
+                return {
+                    "x": self.pos["x"] + velocity["x"],
+                    "y": self.pos["y"] - velocity["y"],
+                }
 
     def get_new_velocity(self, action: tuple):
         new_velocity = self.velocity
@@ -219,7 +247,7 @@ class Game:
         return new_velocity
 
     def get_selectable_actions(self):
-        if self.position["x"] == 0 and self.position["y"] == 0:
+        if self.pos["x"] == 0 and self.pos["y"] == 0:
             return self.ACTIONS
         else:
             velocity_prediction = {}

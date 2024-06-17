@@ -1,7 +1,6 @@
 from Topology import Topology
 from Screen import Screen
 import itertools
-import time
 import random
 
 
@@ -265,8 +264,3 @@ class Game:
 
     def update_player(self):
         self.screen.show_player()
-
-
-g = Game(map_id=1, start_pos_index=1)
-g.update_screen()
-time.sleep(25)

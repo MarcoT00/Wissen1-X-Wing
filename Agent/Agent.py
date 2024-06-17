@@ -3,8 +3,9 @@ import time
 
 
 def run(game, policy):
-    # while game.episode[-2][1]
-    pass
+    while game.episode[-2][1] != "Z":
+        # do sth
+    
 
 
 def evaluate_policy(self, policy, game, num_episodes):

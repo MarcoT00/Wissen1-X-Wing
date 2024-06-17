@@ -70,6 +70,7 @@ class Game:
                 escape_pos=escape_pos,
             )
             self.episode_cost += 1
+            self.episode.append((selected_action, "Z"))
         elif self.collision_is_certain(possible_routes):
             while self.collision_is_certain(possible_routes):
                 velocity_after_collision = self.get_velocity_after_collision(
@@ -88,17 +89,18 @@ class Game:
                 escape_pos=None,
             )
             self.episode_cost += 1 + 5
+            self.episode.append((selected_action, "R"))
         else:
             self.velocity = new_velocity
             self.pos = self.get_new_pos(
                 velocity=new_velocity, escape_is_possible=False, escape_pos=None
             )
             self.episode_cost += 1
+            self.episode.append((selected_action, "X"))
 
-        self.episode.append(selected_action)
         self.episode.append(self.pos)
 
-    def get_velocity_after_collision(self, possible_movement_sequences: list):
+    def get_velocity_after_collision(possible_movement_sequences: list):
         # Each elem of each sequence is one of the following types:
         # (x, 1), (x, -1), (y, 1), (y, -1) : Right, Left, Up, Down
         # All sequences have at least one type and at most two types

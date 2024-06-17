@@ -2,27 +2,28 @@ from .. import Game
 import time
 
 
-class Agent:
+def run(game, policy):
+    # while game.episode[-2][1]
+    pass
 
-    def run(game, policy):
-        pass
 
-    def evaluate_policy(self, policy, game, num_episodes):
-        policy_cost = 0
-        learn_rate = 0
-        episode_count = 1
-        while episode_count <= num_episodes:
-            learn_rate = 1 / episode_count
-            # run game with given policy
-            self.run(game, policy)
+def evaluate_policy(self, policy, game, num_episodes):
+    policy_cost = 0
+    learn_rate = 0
+    episode_count = 1
+    while episode_count <= num_episodes:
+        learn_rate = 1 / episode_count
+        # run game with given policy
+        self.run(game, policy)
 
-            policy_cost = policy_cost + learn_rate * (game.episode_cost - policy_cost)
+        policy_cost = policy_cost + learn_rate * (game.episode_cost - policy_cost)
 
-            episode_count += 1
-        return policy_cost
+        episode_count += 1
+    return policy_cost
 
-    def improve_policy(policy):
-        pass
+
+def improve_policy(policy):
+    pass
 
 
 if __name__ == "__main__":

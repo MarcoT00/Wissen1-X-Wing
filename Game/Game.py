@@ -6,6 +6,7 @@ import random
 
 class Game:
     # Params that do not change during each episode
+    #(x,y)
     ACTIONS = [
         ("B", "B"),
         ("B", "H"),
@@ -30,14 +31,14 @@ class Game:
 
     def __init__(self, map_id, start_pos_index):
         self.MAP = Topology.get_map(map_id)
-        self.START_POS = Topology.get_start_pos(map_id, start_pos_index)
+        self.START_POS = Topology().get_start_pos(map_id, start_pos_index)
 
         self.pos = self.START_POS
         self.episode.append(self.pos)
         self.screen = Screen(self.MAP)
 
     def episode_reset(
-        self,
+            self,
     ):
         """
         Reset the game after each episode
@@ -100,7 +101,7 @@ class Game:
 
         self.episode.append(self.pos)
 
-    def get_velocity_after_collision(possible_movement_sequences: list):
+    def get_velocity_after_collision(self, possible_movement_sequences: list):
         # Each elem of each sequence is one of the following types:
         # (x, 1), (x, -1), (y, 1), (y, -1) : Right, Left, Up, Down
         # All sequences have at least one type and at most two types
@@ -108,7 +109,7 @@ class Game:
         colliding_movements = []
         for movement_seq in possible_movement_sequences:
             colliding_movements.append(movement_seq[-1])
-        colliding_movement_types = set(colliding_movements)
+        colliding_movement_types = list(set(colliding_movements))
 
         if len(colliding_movement_types) == 1:
             match colliding_movement_types[0]:
@@ -131,13 +132,13 @@ class Game:
                 case set([("x", -1), ("y", -1)]):
                     return {"x": 1, "y": 1}
 
-    def check_escape(possible_routes: list):
+    def check_escape(self, possible_routes: list):
         for route in possible_routes:
             if route[-1][1] == "Z":
                 return True, route[-1][0]
         return False, None
 
-    def collision_is_certain(possible_routes: list):
+    def collision_is_certain(self, possible_routes: list):
         for route in possible_routes:
             if route[-1][1] != "R":
                 return False
@@ -151,8 +152,8 @@ class Game:
         # Get possible movement sequences
         num_x_moves = abs(velocity["x"])
         num_y_moves = abs(velocity["y"])
-        x_move = ("x", velocity["x"] / num_x_moves) if num_x_moves != 0 else ("x", 0)
-        y_move = ("y", velocity["y"] / num_y_moves) if num_y_moves != 0 else ("y", 0)
+        x_move = ("x", int(velocity["x"] / num_x_moves)) if num_x_moves != 0 else ("x", 0)
+        y_move = ("y", int(velocity["y"] / num_y_moves)) if num_y_moves != 0 else ("y", 0)
         movement_list = [x_move] * num_x_moves + [y_move] * num_y_moves
         unique_permutations = set(itertools.permutations(movement_list))
         available_movement_sequences = [
@@ -192,8 +193,8 @@ class Game:
 
     def get_new_pos(self, velocity: dict, escape_is_possible: bool, escape_pos: dict):
         if random.random() < 0.5:
-            x_move = velocity["x"] / abs(velocity["x"]) if velocity["x"] != 0 else 0
-            y_move = velocity["y"] / abs(velocity["y"]) if velocity["y"] != 0 else 0
+            x_move = int(velocity["x"] / abs(velocity["x"])) if velocity["x"] != 0 else 0
+            y_move = int(velocity["y"] / abs(velocity["y"])) if velocity["y"] != 0 else 0
             if x_move != 0 and y_move != 0:
                 if random.random() < 0.5:
                     x_move = 0
@@ -261,8 +262,11 @@ class Game:
             ]
             return selectable_actions
 
+    def get_state(self):
+        return {"x": self.pos["x"], "y": self.pos["y"], "velocity": {"x": self.velocity["x"], "y": self.velocity["y"]}}
+
     def update_screen(self):
         self.screen.show_map()
 
     def update_player(self):
-        self.screen.show_player()
+        self.screen.show_player(self.pos)

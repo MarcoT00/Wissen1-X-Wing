@@ -29,8 +29,8 @@ class Screen:
         self.draw_grid(self.screen)
         pygame.display.flip()
 
-    def show_player(self):
-        self.draw_player(self.screen)
+    def show_player(self, position):
+        self.draw_player(self.screen, position)
         pygame.display.flip()
 
     def draw_grid(self, screen):
@@ -62,8 +62,8 @@ class Screen:
                 )
 
     def draw_player(self, screen, position: dict):
-        row = position.x
-        col = position.y
+        row = position["y"]
+        col = position["x"]
         if self.grid[row][col] is not None:
             rect = self.get_rect(row, col)
             pygame.draw.circle(screen, (0, 255, 255), rect.center, self.CELL_SIZE // 4)

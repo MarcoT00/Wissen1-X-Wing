@@ -1,5 +1,6 @@
 import pygame
 import sys
+import time
 
 
 class Screen:
@@ -27,11 +28,11 @@ class Screen:
 
     def show_map(self):
         self.draw_grid(self.screen)
-        pygame.display.flip()
+        pygame.display.update()
 
     def show_player(self, position):
         self.draw_player(self.screen, position)
-        pygame.display.flip()
+        pygame.display.update()
 
     def draw_grid(self, screen):
         screen.fill(self.RAND_COLOR)
@@ -62,11 +63,12 @@ class Screen:
                 )
 
     def draw_player(self, screen, position: dict):
+        pygame.event.clear()
         row = position["y"]
         col = position["x"]
         if self.grid[row][col] is not None:
             rect = self.get_rect(row, col)
-            pygame.draw.circle(screen, (0, 255, 255), rect.center, self.CELL_SIZE // 4)
+            pygame.draw.circle(screen, (64, 86, 244), rect.center, self.CELL_SIZE // 4)
 
     def get_rect(self, row, col):
         return pygame.Rect(

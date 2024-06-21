@@ -14,7 +14,7 @@ class Agent:
             state = self.game.get_state()
             episode = []
             while True:
-                action = policy[state]
+                action = policy[f"{state}"]
                 '''
                 next_state: x_pos, y_pos, velocity
                 reward: either 1 or 5 if collision
@@ -46,7 +46,7 @@ class Agent:
                         for y_speed in range(-4,5):
                             state = {"x": col, "y": row, "velocity": {"x": x_speed, "y": y_speed}}
                             action = self.game.ACTIONS[4]
-                            policy[state] = action
+                            policy[f"{state}"] = action
         return policy
     def policy_iteration_mc(self, gamma=0.99, theta=0.0001, n_rollouts=10):
         value_function = {}
@@ -61,9 +61,9 @@ class Agent:
             returns = self.monte_carlo_rollout(policy, G, gamma, n_rollouts)
             for state, action, G in returns:
                 if state not in value_function:
-                    value_function[state] = 0
-                old_value = value_function[state]
-                value_function[state] += (G - value_function[state])
+                    value_function[f"{state}"] = 0
+                old_value = value_function[f"{state}"]
+                value_function[f"{state}"] += (G - value_function[f"{state}"])
                 delta = max(delta, abs(G - old_value))
 
             if delta < theta:
@@ -77,17 +77,17 @@ class Agent:
                         for x_speed in range(-4, 5):
                             for y_speed in range(-4, 5):
                                 state = {"x": col, "y": row, "velocity": {"x": x_speed, "y": y_speed}}
-                                old_action = policy[state]
+                                old_action = policy[f"{state}"]
                                 action_values = {}
                                 for action in possible_actions:
                                     self.game.pos = {"x": row, "y": col}
                                     self.game.velocity = {"x": x_speed, "y": y_speed}
                                     next_state, reward, _ = self.game.change_state(action)
                                     if next_state not in value_function:
-                                        value_function[next_state] = 0
-                                    action_values[action] = reward + gamma * value_function[next_state]
+                                        value_function[f"{next_state}"] = 0
+                                    action_values[action] = reward + gamma * value_function[f"{next_state}"]
                                 best_action = max(action_values, key=action_values.get)
-                                policy[state] = best_action
+                                policy[f"{state}"] = best_action
                                 if old_action != best_action:
                                     policy_stable = False
             if policy_stable:

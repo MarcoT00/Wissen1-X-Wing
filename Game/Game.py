@@ -9,13 +9,13 @@ class Game:
     #(x,y)
     ACTIONS = [
         ("B", "B"),
-        ("B", "H"),
+        ("B", "H"), #Right
         ("B", "V"),
-        ("H", "B"),
+        ("H", "B"), #UP
         ("H", "H"),
-        ("H", "V"),
+        ("H", "V"), #Down
         ("V", "B"),
-        ("V", "H"),
+        ("V", "H"), #Left
         ("V", "V"),
     ]
     MAP = None
@@ -179,7 +179,10 @@ class Game:
                     "x": route[-1][0]["x"],
                     "y": route[-1][0]["y"],
                 }
-                next_pos[movement[0]] = next_pos[movement[0]] + movement[1]
+                if movement[0] == "x":
+                    next_pos[movement[0]] = next_pos[movement[0]] + movement[1]
+                else:
+                    next_pos[movement[0]] = next_pos[movement[0]] - movement[1]
                 next_pos_type = self.MAP[next_pos["y"]][next_pos["x"]]
                 route.append((next_pos, next_pos_type))
                 possible_movement_seq.append(movement)
@@ -192,7 +195,7 @@ class Game:
         return possible_routes, possible_movement_sequences
 
     def get_new_pos(self, velocity: dict, escape_is_possible: bool, escape_pos: dict):
-        if random.random() < 0.5:
+        '''if random.random() < 0.5:
             x_move = int(velocity["x"] / abs(velocity["x"])) if velocity["x"] != 0 else 0
             y_move = int(velocity["y"] / abs(velocity["y"])) if velocity["y"] != 0 else 0
             if x_move != 0 and y_move != 0:
@@ -204,14 +207,14 @@ class Game:
                 "x": self.pos["x"] + x_move,
                 "y": self.pos["y"] - y_move,
             }
+        else:'''
+        if escape_is_possible:
+            return escape_pos
         else:
-            if escape_is_possible:
-                return escape_pos
-            else:
-                return {
-                    "x": self.pos["x"] + velocity["x"],
-                    "y": self.pos["y"] - velocity["y"],
-                }
+            return {
+                "x": self.pos["x"] + velocity["x"],
+                "y": self.pos["y"] - velocity["y"],
+            }
 
     def get_new_velocity(self, action: tuple):
         new_velocity = self.velocity

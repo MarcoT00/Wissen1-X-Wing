@@ -1,7 +1,6 @@
 from .. import Game
-import time
-import numpy as np
-import random
+import Simulate
+import json
 
 
 class Agent:
@@ -12,12 +11,10 @@ class Agent:
         episode_cost = 0
         #episode = []
         while not self.game.is_done():
+            state = self.game.get_state()
             action = policy[f"{state}"]
             cost = self.game.change_state(action)
-            next_state = self.game.get_state()
             episode_cost += cost
-            #episode.append((state, action, cost))
-            state = next_state
         return episode_cost
 
 
@@ -48,70 +45,50 @@ class Agent:
             value_function[state] = old_value + (learn_rate * (g[state] - old_value))
         return value_function
 
-    def policy_improvment(self):
-        pass
+    def policy_improvment(self, policy, value_function, gamma):
+        possible_actions = self.game.get_selectable_actions()
+        # Policy Improvement
+        for row in range(self.Y_SIZE):
+            for col in range(self.X_SIZE):
+                if self.game.MAP[row][col] in ["S", "X", "Z"]:
+                    for x_speed in range(-4, 5):
+                        for y_speed in range(-4, 5):
+                            state = {"x": col, "y": row, "velocity": {"x": x_speed, "y": y_speed}}
+                            old_action = policy[f"{state}"]
+                            action_values = {}
+                            for action in possible_actions:
+                                self.game.pos = {"x": row, "y": col}
+                                self.game.velocity = {"x": x_speed, "y": y_speed}
+                                next_state, reward, _ = self.game.change_state(action)
+                                action_values[action] = reward + gamma * value_function[f"{next_state}"]
+                            best_action = min(action_values, key=action_values.get)
+                            policy[f"{state}"] = best_action
+
+        return policy
 
     def main(self, map_id, n_episode):
         policy, value_function = self.init_policy_evaluation()
-        policy_cost=0
         g = {}
         t = 1
-        for _ in range(n_episode):
-            for state in policy.keys():
-                self.game = Game(map_id=map_id, x_pos=state['x'], y_pos=state['y'], x_speed=state['velocity']['x'], y_speed=state['velocity']['y'])
-                episode_cost = self.monte_carlo_rollout_for_one_start(policy)
-                g[state] = episode_cost
-            value_function = self.policy_evaluation(g, value_function, t)
-        self.policy_improvment()
+        old_policy = {}
+        while policy != old_policy:
+            for _ in range(n_episode):
+                for state in policy.keys():
+                    self.game = Game(map_id=map_id, x_pos=state['x'], y_pos=state['y'], x_speed=state['velocity']['x'], y_speed=state['velocity']['y'])
+                    episode_cost = self.monte_carlo_rollout_for_one_start(policy)
+                    g[state] = episode_cost
+                value_function = self.policy_evaluation(g, value_function, t)
+            old_policy = policy
+            policy = self.policy_improvment(policy=policy, value_function=value_function, gamma=1)
 
-    def policy_iteration_mc(self, gamma=0.99, theta=0.0001, n_rollouts=10):
-        possible_actions = self.game.get_selectable_actions()
-
-        # Initialize random policy
-        policy, value_function = self.init_policy_evaluation()
-        policy_cost = 0
-        while True:
-            # Policy Evaluation
-            delta = 0
-            episode, policy_cost = self.monte_carlo_rollout(policy, policy_cost, gamma, n_rollouts)
-            for state, action, cost in episode:
-                if state not in value_function:
-                    value_function[f"{state}"] = 0
-                old_value = value_function[f"{state}"]
-                #value_function[f"{state}"] += (policy_cost - value_function[f"{state}"])#cost
-                value_function[f"{state}"] = cost
-                #delta = max(delta, abs(G - old_value))# value_function[f"{state}"] - old_value
-                delta = value_function[f"{state}"] - old_value
-
-            if delta < theta:
-                break
-
-            # Policy Improvement
-            policy_stable = True
-            for row in range(self.Y_SIZE):
-                for col in range(self.X_SIZE):
-                    if self.game.MAP[row][col] in ["S", "X", "Z"]:
-                        for x_speed in range(-4, 5):
-                            for y_speed in range(-4, 5):
-                                state = {"x": col, "y": row, "velocity": {"x": x_speed, "y": y_speed}}
-                                old_action = policy[f"{state}"]
-                                action_values = {}
-                                for action in possible_actions:
-                                    self.game.pos = {"x": row, "y": col}
-                                    self.game.velocity = {"x": x_speed, "y": y_speed}
-                                    next_state, reward, _ = self.game.change_state(action)
-                                    action_values[action] = reward + gamma * value_function[f"{next_state}"]
-                                best_action = max(action_values, key=action_values.get)
-                                policy[f"{state}"] = best_action
-                                if old_action != best_action:
-                                    policy_stable = False
-            if policy_stable:
-                break
-
-        return policy, value_function
+        return policy
 
 if __name__ == "__main__":
     agent = Agent()
-    agent.main()
+    print("Start Agent")
+    policy = agent.main()
+    print("Agent is done")
+    with open('optimal_policy.json', 'w') as f:
+        json.dump(policy, f)
 
 # policy = [{s0: a0}, {s1: a1}]

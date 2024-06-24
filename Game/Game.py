@@ -33,6 +33,7 @@ class Game:
 
         self.pos = self.START_POS
         self.screen = Screen(self.MAP)
+        self.num_collision = 0
 
     def __int__(self, map_id, x_pos, y_pos, x_speed, y_speed):
         self.MAP = Topology.get_map(map_id)
@@ -48,6 +49,7 @@ class Game:
         self.timestep = 0
         self.velocity = {"x": 0, "y": 0}
         self.pos = self.START_POS
+        self.num_collision = 0
 
     def change_state(self, selected_action: tuple):
         self.timestep += 1
@@ -90,6 +92,7 @@ class Game:
                 escape_pos=None,
             )
             cost = 1 + 5
+            self.num_collision += 1
         else:
             self.velocity = new_velocity
             self.pos = self.get_new_pos(

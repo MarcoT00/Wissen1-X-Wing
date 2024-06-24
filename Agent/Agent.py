@@ -13,11 +13,13 @@ class Agent:
         pass
 
     def find_optimal_policy(self, map_id, num_episode):
-        policy, value_function = self.init_policy_evaluation()
+        policy, init_value_function = self.init_policy_evaluation()
 
         old_policy = {}
         while policy != old_policy:
-            value_function = self.evaluate_policy(map_id, num_episode, policy)
+            value_function = self.evaluate_policy(
+                map_id, num_episode, policy, init_value_function
+            )
             old_policy = policy
             policy = self.improve_policy(
                 policy=policy, value_function=value_function, gamma=1
@@ -49,8 +51,9 @@ class Agent:
                             value_function[state] = 0
         return policy, value_function
 
-    def evaluate_policy(self, map_id, num_episode, policy):
+    def evaluate_policy(self, map_id, num_episode, policy, init_value_function):
         t = 1
+        curr_value_function = init_value_function
         while t <= num_episode:
             g = {}
             for state in policy.keys():
@@ -62,11 +65,11 @@ class Agent:
                     y_speed=state[2][1],
                 )
                 g[state] = self.get_episode_cost(policy)
-            value_function = self.update_value_function(
-                g, value_function, learn_rate=1 / t
+            curr_value_function = self.update_value_function(
+                g, curr_value_function, learn_rate=1 / t
             )
             t += 1
-        return value_function
+        return curr_value_function
 
     def get_episode_cost(self, policy):
         """

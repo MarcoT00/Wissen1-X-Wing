@@ -1,5 +1,4 @@
 from .. import Game
-import Simulate
 import json
 
 

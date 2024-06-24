@@ -25,8 +25,6 @@ class Game:
     timestep = 0
     velocity = {"x": 0, "y": 0}
     pos = {"x": None, "y": None}
-    episode_cost = 0
-    episode = []  # sequence of positions and actions that the agent takes
     screen = None
 
     def __init__(self, map_id, start_pos_index):
@@ -34,10 +32,14 @@ class Game:
         self.START_POS = Topology().get_start_pos(map_id, start_pos_index)
 
         self.pos = self.START_POS
-        self.episode.append(self.pos)
         self.screen = Screen(self.MAP)
 
-    def episode_reset(
+    def __int__(self, map_id, x_pos, y_pos, x_speed, y_speed):
+        self.MAP = Topology.get_map(map_id)
+        self.pos = {"x": x_pos, "y": y_pos}
+        self.velocity = {"x": x_speed, "y": y_speed}
+
+    def reset(
             self,
     ):
         """
@@ -46,11 +48,10 @@ class Game:
         self.timestep = 0
         self.velocity = {"x": 0, "y": 0}
         self.pos = self.START_POS
-        self.episode_cost = 0
-        self.episode = [self.pos]
 
     def change_state(self, selected_action: tuple):
         self.timestep += 1
+        cost = 0
 
         # Get new velocity based on selected action
         new_velocity = self.get_new_velocity(selected_action)
@@ -70,8 +71,7 @@ class Game:
                 escape_is_possible=True,
                 escape_pos=escape_pos,
             )
-            self.episode_cost += 1
-            self.episode.append((selected_action, "Z"))
+            cost = 1
         elif self.collision_is_certain(possible_routes):
             while self.collision_is_certain(possible_routes):
                 velocity_after_collision = self.get_velocity_after_collision(
@@ -89,17 +89,15 @@ class Game:
                 escape_is_possible=False,
                 escape_pos=None,
             )
-            self.episode_cost += 1 + 5
-            self.episode.append((selected_action, "R"))
+            cost = 1 + 5
         else:
             self.velocity = new_velocity
             self.pos = self.get_new_pos(
                 velocity=new_velocity, escape_is_possible=False, escape_pos=None
             )
-            self.episode_cost += 1
-            self.episode.append((selected_action, "X"))
+            cost = 1
 
-        self.episode.append(self.pos)
+        return cost
 
     def get_velocity_after_collision(self, possible_movement_sequences: list):
         # Each elem of each sequence is one of the following types:
@@ -267,6 +265,9 @@ class Game:
 
     def get_state(self):
         return {"x": self.pos["x"], "y": self.pos["y"], "velocity": {"x": self.velocity["x"], "y": self.velocity["y"]}}
+
+    def is_done(self):
+        return self.MAP[self.pos["y"]][self.pos["x"]] == "Z"
 
     def update_screen(self):
         self.screen.show_map()

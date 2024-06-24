@@ -5,43 +5,41 @@ import random
 
 
 class Game:
-    # Params that do not change during each episode
-    #(x,y)
+    # Params that do not change after each episode
+    # (x,y)
     ACTIONS = [
         ("B", "B"),
-        ("B", "H"), #Right
+        ("B", "H"),  # Right
         ("B", "V"),
-        ("H", "B"), #UP
+        ("H", "B"),  # UP
         ("H", "H"),
-        ("H", "V"), #Down
+        ("H", "V"),  # Down
         ("V", "B"),
-        ("V", "H"), #Left
+        ("V", "H"),  # Left
         ("V", "V"),
     ]
     MAP = None
     START_POS = None
 
-    # Params that change during each episode
-    timestep = 0
-    velocity = {"x": 0, "y": 0}
-    pos = {"x": None, "y": None}
+    # Params that change after each episode
+    timestep = None
+    velocity = None
+    pos = None
+    num_collision = None
     screen = None
 
-    def __init__(self, map_id, start_pos_index):
+    def __init__(self, map_id, x_pos, y_pos, x_speed, y_speed):
         self.MAP = Topology.get_map(map_id)
-        self.START_POS = Topology().get_start_pos(map_id, start_pos_index)
+        self.START_POS = {"x": x_pos, "y": y_pos}
 
-        self.pos = self.START_POS
-        self.screen = Screen(self.MAP)
-        self.num_collision = 0
-
-    def __int__(self, map_id, x_pos, y_pos, x_speed, y_speed):
-        self.MAP = Topology.get_map(map_id)
-        self.pos = {"x": x_pos, "y": y_pos}
+        self.timestep = 0
         self.velocity = {"x": x_speed, "y": y_speed}
+        self.pos = self.START_POS
+        self.num_collision = 0
+        self.screen = Screen(self.MAP)
 
-    def reset(
-            self,
+    def episode_reset(
+        self,
     ):
         """
         Reset the game after each episode
@@ -50,6 +48,7 @@ class Game:
         self.velocity = {"x": 0, "y": 0}
         self.pos = self.START_POS
         self.num_collision = 0
+        self.screen = Screen(self.MAP)
 
     def change_state(self, selected_action: tuple):
         self.timestep += 1
@@ -153,8 +152,12 @@ class Game:
         # Get possible movement sequences
         num_x_moves = abs(velocity["x"])
         num_y_moves = abs(velocity["y"])
-        x_move = ("x", int(velocity["x"] / num_x_moves)) if num_x_moves != 0 else ("x", 0)
-        y_move = ("y", int(velocity["y"] / num_y_moves)) if num_y_moves != 0 else ("y", 0)
+        x_move = (
+            ("x", int(velocity["x"] / num_x_moves)) if num_x_moves != 0 else ("x", 0)
+        )
+        y_move = (
+            ("y", int(velocity["y"] / num_y_moves)) if num_y_moves != 0 else ("y", 0)
+        )
         movement_list = [x_move] * num_x_moves + [y_move] * num_y_moves
         unique_permutations = set(itertools.permutations(movement_list))
         available_movement_sequences = [
@@ -196,7 +199,7 @@ class Game:
         return possible_routes, possible_movement_sequences
 
     def get_new_pos(self, velocity: dict, escape_is_possible: bool, escape_pos: dict):
-        '''if random.random() < 0.5:
+        """if random.random() < 0.5:
             x_move = int(velocity["x"] / abs(velocity["x"])) if velocity["x"] != 0 else 0
             y_move = int(velocity["y"] / abs(velocity["y"])) if velocity["y"] != 0 else 0
             if x_move != 0 and y_move != 0:
@@ -208,7 +211,7 @@ class Game:
                 "x": self.pos["x"] + x_move,
                 "y": self.pos["y"] - y_move,
             }
-        else:'''
+        else:"""
         if escape_is_possible:
             return escape_pos
         else:
@@ -267,9 +270,9 @@ class Game:
             return selectable_actions
 
     def get_state(self):
-        return {"x": self.pos["x"], "y": self.pos["y"], "velocity": {"x": self.velocity["x"], "y": self.velocity["y"]}}
+        return (self.pos["x"], self.pos["y"], (self.velocity["x"], self.velocity["y"]))
 
-    def is_done(self):
+    def is_finished(self):
         return self.MAP[self.pos["y"]][self.pos["x"]] == "Z"
 
     def update_screen(self):

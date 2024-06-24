@@ -14,6 +14,7 @@ class Topology:
             rows = csv.reader(csvfile)
             return [list(row) for row in rows]
 
+    @staticmethod
     def get_start_pos(self, map_id, start_pos_index):
         if map_id == 1:
             pos = self.start_positions_map_1[start_pos_index]

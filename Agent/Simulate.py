@@ -21,8 +21,9 @@ class Simulate:
             x_speed=0,
             y_speed=0,
         )
+        flight_cost = {}
         for i in range(1, 1 + num_flight):
-            self.execute_simulation(game)
+            flight_cost[i] = self.execute_simulation(game)
             print(
                 f"{i}-th flight, number of actions leading to collision: {game.num_collision}"
             )
@@ -32,14 +33,20 @@ class Simulate:
         print(
             f"Number of flights in which collision occurred: {self.num_collision}/{num_flight}"
         )
+        min_cost = min(flight_cost.values())
+        min_cost_flights = [
+            flight_id for flight_id, cost in flight_cost.items() if cost == min_cost
+        ]
+        print(f"Flight(s) with minimal cost: {min_cost_flights}; Cost: {min_cost}")
 
     def execute_simulation(self, game: Game):
         episode_cost = 0
-        game.update_screen()
+        # game.update_screen()
         while not game.is_finished():
             state = game.get_state()
             action = self.policy[state]
             cost = game.change_state(action)
             episode_cost += cost
-            game.update_player()
-            time.sleep(1)
+            # game.update_player()
+            # time.sleep(1)
+        return episode_cost

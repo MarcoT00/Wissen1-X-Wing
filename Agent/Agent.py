@@ -110,9 +110,7 @@ class Agent:
             action_values = {}
             for action in possible_actions:
                 cost = self.game.change_state(action)
-                action_values[action] = (
-                cost + value_function[self.game.get_state()]
-                )
+                action_values[action] = cost + value_function[self.game.get_state()]
                 best_action = min(action_values, key=action_values.get)
                 greedy_policy[state] = best_action
 

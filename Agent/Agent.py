@@ -98,28 +98,23 @@ class Agent:
 
         greedy_policy = {}
 
-        for row in range(self.Y_SIZE):
-            for col in range(self.X_SIZE):
-                if self.game.MAP[row][col] in ["S", "X", "Z"]:
-                    for x_speed in range(-4, 5):
-                        for y_speed in range(-4, 5):
-                            state = (col, row, (x_speed, y_speed))
-                            self.game = Game(
-                                map_id=map_id,
-                                x_pos=state[0],
-                                y_pos=state[1],
-                                x_speed=state[2][0],
-                                y_speed=state[2][1],
-                            )
-                            possible_actions = self.game.get_selectable_actions()
-                            action_values = {}
-                            for action in possible_actions:
-                                cost = self.game.change_state(action)
-                                action_values[action] = (
-                                    cost + value_function[self.game.get_state()]
-                                )
-                            best_action = min(action_values, key=action_values.get)
-                            greedy_policy[state] = best_action
+        for state in policy.keys():
+            self.game = Game(
+                map_id=map_id,
+                x_pos=state[0],
+                y_pos=state[1],
+                x_speed=state[2][0],
+                y_speed=state[2][1],
+            )
+            possible_actions = self.game.get_selectable_actions()
+            action_values = {}
+            for action in possible_actions:
+                cost = self.game.change_state(action)
+                action_values[action] = (
+                cost + value_function[self.game.get_state()]
+                )
+                best_action = min(action_values, key=action_values.get)
+                greedy_policy[state] = best_action
 
         return greedy_policy
 

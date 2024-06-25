@@ -22,7 +22,7 @@ class Agent:
             )
             old_policy = policy
             policy = self.improve_policy(
-                policy=policy, value_function=value_function, gamma=1
+                map_id=map_id, policy=policy, value_function=value_function
             )
 
         return policy
@@ -94,30 +94,30 @@ class Agent:
             )
         return new_value_function
 
-    def improve_policy(self, policy, value_function, gamma):
-        possible_actions = self.game.get_selectable_actions()
-        # Policy Improvement
+    def improve_policy(self, map_id, policy, value_function):
+
         for row in range(self.Y_SIZE):
             for col in range(self.X_SIZE):
                 if self.game.MAP[row][col] in ["S", "X", "Z"]:
                     for x_speed in range(-4, 5):
                         for y_speed in range(-4, 5):
-                            state = {
-                                "x": col,
-                                "y": row,
-                                "velocity": {"x": x_speed, "y": y_speed},
-                            }
-                            old_action = policy[f"{state}"]
+                            state = (col, row, (x_speed, y_speed))
+                            self.game = Game(
+                                map_id=map_id,
+                                x_pos=state[0],
+                                y_pos=state[1],
+                                x_speed=state[2][0],
+                                y_speed=state[2][1],
+                            )
+                            possible_actions = self.game.get_selectable_actions()
                             action_values = {}
                             for action in possible_actions:
-                                self.game.pos = {"x": row, "y": col}
-                                self.game.velocity = {"x": x_speed, "y": y_speed}
-                                next_state, reward, _ = self.game.change_state(action)
+                                cost = self.game.change_state(action)
                                 action_values[action] = (
-                                    reward + gamma * value_function[f"{next_state}"]
+                                    cost + value_function[self.game.get_state()]
                                 )
                             best_action = min(action_values, key=action_values.get)
-                            policy[f"{state}"] = best_action
+                            policy[state] = best_action
 
         return policy
 

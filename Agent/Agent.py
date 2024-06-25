@@ -127,9 +127,8 @@ class Agent:
 if __name__ == "__main__":
     agent = Agent()
     print("Start Agent")
-    policy = agent.find_optimal_policy()
-    print("Agent has found optimal policy")
-    with open("optimal_policy.json", "w") as f:
+    map_id = 1
+    policy = agent.find_optimal_policy(map_id=map_id, num_episode=10)
+    print(f"Agent has found optimal policy for map {map_id}")
+    with open(f"optimal_policy_map{map_id}.json", "w") as f:
         json.dump(policy, f)
-
-# policy = [{s0: a0}, {s1: a1}]

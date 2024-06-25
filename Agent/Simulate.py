@@ -1,4 +1,5 @@
-from ..Game import Game, Topology
+from ..Game.Topology import Topology
+from ..Game.Game import Game
 import json
 import time
 

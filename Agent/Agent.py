@@ -96,6 +96,8 @@ class Agent:
 
     def improve_policy(self, map_id, policy, value_function):
 
+        greedy_policy = {}
+
         for row in range(self.Y_SIZE):
             for col in range(self.X_SIZE):
                 if self.game.MAP[row][col] in ["S", "X", "Z"]:
@@ -117,9 +119,9 @@ class Agent:
                                     cost + value_function[self.game.get_state()]
                                 )
                             best_action = min(action_values, key=action_values.get)
-                            policy[state] = best_action
+                            greedy_policy[state] = best_action
 
-        return policy
+        return greedy_policy
 
 
 if __name__ == "__main__":

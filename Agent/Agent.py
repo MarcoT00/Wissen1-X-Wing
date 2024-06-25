@@ -55,7 +55,7 @@ class Agent:
         t = 1
         curr_value_function = init_value_function
         while t <= num_episode:
-            g = {}
+            g = {}  # TODO
             for state in policy.keys():
                 self.game = Game(
                     map_id=map_id,
@@ -75,6 +75,7 @@ class Agent:
         """
         Get episode cost after applying the given policy to the game in an episode
         """
+        # TODO
         episode_cost = 0
         while not self.game.is_finished():
             state = self.game.get_state()

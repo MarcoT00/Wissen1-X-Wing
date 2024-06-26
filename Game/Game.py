@@ -52,7 +52,7 @@ class Game:
         self.num_collision = 0
         self.screen = Screen(self.MAP)
 
-    def change_state(self, selected_action: tuple):
+    def change_state(self, selected_action: tuple, stochastic_movement=False):
         self.timestep += 1
         cost = 0
 
@@ -200,7 +200,13 @@ class Game:
 
         return possible_routes, possible_movement_sequences
 
-    def get_new_pos(self, velocity: dict, escape_is_possible: bool, escape_pos: dict):
+    def get_new_pos(
+        self,
+        velocity: dict,
+        escape_is_possible: bool,
+        escape_pos: dict,
+        stochastic_movement=False,
+    ):
         """if random.random() < 0.5:
             x_move = int(velocity["x"] / abs(velocity["x"])) if velocity["x"] != 0 else 0
             y_move = int(velocity["y"] / abs(velocity["y"])) if velocity["y"] != 0 else 0

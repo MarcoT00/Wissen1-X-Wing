@@ -20,6 +20,7 @@ class Agent:
         old_policy = {}
         iteration =0
         policy_different = True
+        history = {}
         while policy_different:
             value_function = self.evaluate_policy(
                 num_episode, policy, init_value_function, init_g
@@ -33,13 +34,21 @@ class Agent:
             print("Iteration: ", iteration)
             progress = 0
             policy_different = False
+            old_history = history.copy()
+            history = {}
             for state in policy.keys():
                 if old_policy[state] != policy[state]:
                     policy_different = True
                     progress+=1
+                    history[state] = policy[state]
+
+            if old_history.keys() == history.keys():
+                print("Its the same")
+                policy_different = False
+
             print(f"{progress} from {len(policy.keys())} are different")
 
-        return policy
+        return policy, history, old_history
 
     def initialize(self, map_id, start_pos_index):
         # state: (x, y, (x_speed, y_speed))
@@ -131,6 +140,8 @@ class Agent:
                     action_values[action] = cost + value_function[self.game.get_state()]
                 self.game.reset_to_original_state()
             if action_values != {}:
+                #Find the action with minimal costs
+                #Choose the action that is also the option from last iteration
                 best_action = min(action_values, key=action_values.get)
             else:
                 best_action = policy[state]
@@ -143,11 +154,18 @@ if __name__ == "__main__":
     print("Start Agent")
     map_id = 1
     start_pos_index = 1
-    policy = agent.find_optimal_policy(
+    policy, history, old_history = agent.find_optimal_policy(
         map_id=map_id, start_pos_index=start_pos_index, num_episode=10
     )
+
+    for state in history.keys():
+        print(f"{state}: {history[state]} / {old_history[state]}")
+
+    stringlify_policy = {}
+    for key, value in policy.items():
+        stringlify_policy[str(key)] = value
     print(
         f"Agent has found optimal policy for start position index {start_pos_index} in map {map_id}"
     )
     with open(f"optimal_policy_map{map_id}_index{start_pos_index}.json", "w") as f:
-        json.dump(policy, f)
+        json.dump(stringlify_policy, f)

@@ -20,6 +20,7 @@ class Game:
     ]
     MAP = None
     START_POS = None
+    START_VELOCITY = None
 
     # Params that change after each episode
     timestep = None
@@ -31,22 +32,23 @@ class Game:
     def __init__(self, map_id, x_pos, y_pos, x_speed, y_speed):
         self.MAP = Topology.get_map(map_id)
         self.START_POS = {"x": x_pos, "y": y_pos}
+        self.START_VELOCITY = {"x": x_speed, "y": y_speed}
 
         self.timestep = 0
-        self.velocity = {"x": x_speed, "y": y_speed}
-        self.pos = self.START_POS
+        self.velocity = self.START_VELOCITY.copy()
+        self.pos = self.START_POS.copy()
         self.num_collision = 0
         self.screen = Screen(self.MAP)
 
-    def episode_reset(
+    def reset_to_original_state(
         self,
     ):
         """
         Reset the game after each episode
         """
         self.timestep = 0
-        self.velocity = {"x": 0, "y": 0}
-        self.pos = self.START_POS
+        self.velocity = self.START_VELOCITY.copy()
+        self.pos = self.START_POS.copy()
         self.num_collision = 0
         self.screen = Screen(self.MAP)
 

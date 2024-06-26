@@ -63,14 +63,16 @@ class Agent:
                             init_g[state] = 0
         return policy, init_value_function, init_g
 
-    def evaluate_policy(self, num_episode, policy, init_value_function, init_g):
+    def evaluate_policy(
+        self, num_episode, policy, init_value_function: dict, init_g: dict
+    ):
         t = 1
-        value_function = init_value_function
+        value_function = init_value_function.copy()
         while t <= num_episode:
-            g = init_g
+            g = init_g.copy()
             self.update_g(policy, g)
             self.update_value_function(g, value_function, learn_rate=1 / t)
-            self.game.episode_reset()
+            self.game.reset_to_original_state()
             t += 1
         return value_function
 
@@ -95,7 +97,7 @@ class Agent:
             value_function[state] = old_value + (learn_rate * (g[state] - old_value))
 
     def improve_policy(self, map_id, policy, value_function):
-
+        # TODO: Check if the method is correct
         greedy_policy = {}
 
         for state in policy.keys():
@@ -106,13 +108,14 @@ class Agent:
                 x_speed=state[2][0],
                 y_speed=state[2][1],
             )
-            possible_actions = self.game.get_selectable_actions()
+            selectable_actions = self.game.get_selectable_actions()
             action_values = {}
-            for action in possible_actions:
+            for action in selectable_actions:
                 cost = self.game.change_state(action)
                 action_values[action] = cost + value_function[self.game.get_state()]
-                best_action = min(action_values, key=action_values.get)
-                greedy_policy[state] = best_action
+                self.game.reset_to_original_state()
+            best_action = min(action_values, key=action_values.get)
+            greedy_policy[state] = best_action
 
         return greedy_policy
 

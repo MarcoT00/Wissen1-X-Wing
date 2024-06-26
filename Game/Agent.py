@@ -18,37 +18,31 @@ class Agent:
         policy, init_value_function, init_g = self.initialize(map_id, start_pos_index)
 
         old_policy = {}
-        iteration =0
-        policy_different = True
-        history = {}
-        while policy_different:
+        iteration = 1
+        optimal_policy_found = False
+        changes = {}
+        while not optimal_policy_found:
+            print("Iteration: ", iteration)
             value_function = self.evaluate_policy(
                 num_episode, policy, init_value_function, init_g
             )
-            print("Evaluation done")
             old_policy = policy
             policy = self.improve_policy(
                 map_id=map_id, policy=policy, value_function=value_function
             )
-            iteration+=1
-            print("Iteration: ", iteration)
-            progress = 0
-            policy_different = False
-            old_history = history.copy()
-            history = {}
+            iteration += 1
+
+            previous_changes = changes.copy()
+            changes = {}
             for state in policy.keys():
-                if old_policy[state] != policy[state]:
-                    policy_different = True
-                    progress+=1
-                    history[state] = policy[state]
+                if policy[state] != old_policy[state]:
+                    changes[state] = policy[state]
+            if len(changes) == 0:
+                optimal_policy_found = True
 
-            if old_history.keys() == history.keys():
-                print("Its the same")
-                policy_different = False
+            print(f"{len(changes)} changes from the previous policy")
 
-            print(f"{progress} from {len(policy.keys())} are different")
-
-        return policy, history, old_history
+        return policy, changes, previous_changes
 
     def initialize(self, map_id, start_pos_index):
         # state: (x, y, (x_speed, y_speed))
@@ -129,20 +123,25 @@ class Agent:
                 y_speed=state[2][1],
             )
             selectable_actions = self.game.get_selectable_actions()
-            action_values = {}
+            action_costs = {}
             for action in selectable_actions:
                 cost = self.game.change_state(action)
                 if stochastic_movement:
-                    action_values[action] = 0.5 + 0.5*(
+                    action_costs[action] = 0.5 + 0.5 * (
                         cost + value_function[self.game.get_state()]
                     )
                 else:
-                    action_values[action] = cost + value_function[self.game.get_state()]
+                    action_costs[action] = cost + value_function[self.game.get_state()]
                 self.game.reset_to_original_state()
-            if action_values != {}:
-                #Find the action with minimal costs
-                #Choose the action that is also the option from last iteration
-                best_action = min(action_values, key=action_values.get)
+            if action_costs != {}:
+                min_cost = min(action_costs.values())
+                action_with_min_cost = [
+                    action for action, cost in action_costs.items() if cost == min_cost
+                ]
+                if policy[state] in action_with_min_cost:
+                    best_action = policy[state]
+                else:
+                    best_action = min(action_costs, key=action_costs.get)
             else:
                 best_action = policy[state]
             greedy_policy[state] = best_action
@@ -154,18 +153,18 @@ if __name__ == "__main__":
     print("Start Agent")
     map_id = 1
     start_pos_index = 1
-    policy, history, old_history = agent.find_optimal_policy(
-        map_id=map_id, start_pos_index=start_pos_index, num_episode=10
+    optimal_policy, changes, previous_changes = agent.find_optimal_policy(
+        map_id=map_id, start_pos_index=start_pos_index, num_episode=1
     )
 
-    for state in history.keys():
-        print(f"{state}: {history[state]} / {old_history[state]}")
+    for state in changes.keys():
+        print(f"{state}: {changes[state]} / {previous_changes[state]}")
 
-    stringlify_policy = {}
-    for key, value in policy.items():
-        stringlify_policy[str(key)] = value
+    stringified_optimal_policy = {}
+    for state, action in optimal_policy.items():
+        stringified_optimal_policy[str(state)] = action
     print(
         f"Agent has found optimal policy for start position index {start_pos_index} in map {map_id}"
     )
     with open(f"optimal_policy_map{map_id}_index{start_pos_index}.json", "w") as f:
-        json.dump(stringlify_policy, f)
+        json.dump(stringified_optimal_policy, f)

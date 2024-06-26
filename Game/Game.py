@@ -38,7 +38,7 @@ class Game:
         self.velocity = self.START_VELOCITY.copy()
         self.pos = self.START_POS.copy()
         self.num_collision = 0
-        #self.screen = Screen(self.MAP)
+        # self.screen = Screen(self.MAP)
         self.screen = None
 
     def reset_to_original_state(
@@ -51,7 +51,7 @@ class Game:
         self.velocity = self.START_VELOCITY.copy()
         self.pos = self.START_POS.copy()
         self.num_collision = 0
-        #self.screen = Screen(self.MAP)
+        # self.screen = Screen(self.MAP)
         self.screen = None
 
     def change_state(self, selected_action: tuple, stochastic_movement=False):
@@ -128,7 +128,7 @@ class Game:
         else:
             first = colliding_movement_types[0]
             second = colliding_movement_types[1]
-            return {first[0]: -1*first[1], second[0]: -1*second[1]}
+            return {first[0]: -1 * first[1], second[0]: -1 * second[1]}
 
     def check_escape(self, possible_routes: list):
         for route in possible_routes:

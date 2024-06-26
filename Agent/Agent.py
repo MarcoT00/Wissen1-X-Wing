@@ -96,10 +96,8 @@ class Agent:
             old_value = value_function[state]
             value_function[state] = old_value + (learn_rate * (g[state] - old_value))
 
-    def improve_policy(self, map_id, policy, value_function):
-        # TODO: Check if the method is correct
+    def improve_policy(self, map_id, policy, value_function, stochastic_movement=False):
         greedy_policy = {}
-
         for state in policy.keys():
             self.game = Game(
                 map_id=map_id,
@@ -112,11 +110,15 @@ class Agent:
             action_values = {}
             for action in selectable_actions:
                 cost = self.game.change_state(action)
-                action_values[action] = cost + value_function[self.game.get_state()]
+                if stochastic_movement:
+                    action_values[action] = 0.5 + 0.5(
+                        cost + value_function[self.game.get_state()]
+                    )
+                else:
+                    action_values[action] = cost + value_function[self.game.get_state()]
                 self.game.reset_to_original_state()
             best_action = min(action_values, key=action_values.get)
             greedy_policy[state] = best_action
-
         return greedy_policy
 
 
@@ -124,7 +126,12 @@ if __name__ == "__main__":
     agent = Agent()
     print("Start Agent")
     map_id = 1
-    policy = agent.find_optimal_policy(map_id=map_id, start_pos_index=1, num_episode=10)
-    print(f"Agent has found optimal policy for map {map_id}")
-    with open(f"optimal_policy_map{map_id}.json", "w") as f:
+    start_pos_index = 1
+    policy = agent.find_optimal_policy(
+        map_id=map_id, start_pos_index=start_pos_index, num_episode=10
+    )
+    print(
+        f"Agent has found optimal policy for start position index {start_pos_index} in map {map_id}"
+    )
+    with open(f"optimal_policy_map{map_id}_index{start_pos_index}.json", "w") as f:
         json.dump(policy, f)

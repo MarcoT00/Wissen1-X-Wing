@@ -19,7 +19,8 @@ class Agent:
 
         old_policy = {}
         iteration =0
-        while policy != old_policy:
+        policy_different = True
+        while policy_different:
             value_function = self.evaluate_policy(
                 num_episode, policy, init_value_function, init_g
             )
@@ -30,6 +31,13 @@ class Agent:
             )
             iteration+=1
             print("Iteration: ", iteration)
+            progress = 0
+            policy_different = False
+            for state in policy.keys():
+                if old_policy[state] != policy[state]:
+                    policy_different = True
+                    progress+=1
+            print(f"{progress} from {len(policy.keys())} are different")
 
         return policy
 
@@ -116,7 +124,7 @@ class Agent:
             for action in selectable_actions:
                 cost = self.game.change_state(action)
                 if stochastic_movement:
-                    action_values[action] = 0.5 + 0.5(
+                    action_values[action] = 0.5 + 0.5*(
                         cost + value_function[self.game.get_state()]
                     )
                 else:

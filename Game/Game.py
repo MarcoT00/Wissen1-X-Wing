@@ -38,7 +38,8 @@ class Game:
         self.velocity = self.START_VELOCITY.copy()
         self.pos = self.START_POS.copy()
         self.num_collision = 0
-        self.screen = Screen(self.MAP)
+        #self.screen = Screen(self.MAP)
+        self.screen = None
 
     def reset_to_original_state(
         self,
@@ -50,7 +51,8 @@ class Game:
         self.velocity = self.START_VELOCITY.copy()
         self.pos = self.START_POS.copy()
         self.num_collision = 0
-        self.screen = Screen(self.MAP)
+        #self.screen = Screen(self.MAP)
+        self.screen = None
 
     def change_state(self, selected_action: tuple, stochastic_movement=False):
         self.timestep += 1
@@ -124,15 +126,9 @@ class Game:
                 case ("y", -1):
                     return {"x": 1, "y": 0}
         else:
-            match colliding_movement_types:
-                case set([("x", 1), ("y", 1)]):
-                    return {"x": -1, "y": -1}
-                case set([("x", 1), ("y", -1)]):
-                    return {"x": -1, "y": 1}
-                case set([("x", -1), ("y", 1)]):
-                    return {"x": 1, "y": -1}
-                case set([("x", -1), ("y", -1)]):
-                    return {"x": 1, "y": 1}
+            first = colliding_movement_types[0]
+            second = colliding_movement_types[1]
+            return {first[0]: -1*first[1], second[0]: -1*second[1]}
 
     def check_escape(self, possible_routes: list):
         for route in possible_routes:
@@ -229,7 +225,7 @@ class Game:
             }
 
     def get_new_velocity(self, action: tuple):
-        new_velocity = self.velocity
+        new_velocity = self.velocity.copy()
 
         if self.velocity["x"] in range(0, 5):
             match action[0]:
@@ -264,7 +260,9 @@ class Game:
         return new_velocity
 
     def get_selectable_actions(self):
-        if self.pos["x"] == 0 and self.pos["y"] == 0:
+        if self.is_finished():
+            return []
+        elif self.pos["x"] == 0 and self.pos["y"] == 0:
             return self.ACTIONS
         else:
             velocity_prediction = {}

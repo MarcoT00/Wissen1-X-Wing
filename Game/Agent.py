@@ -1,5 +1,5 @@
-from ..Game.Game import Game
-from ..Game.Topology import Topology
+from Game import Game
+from Topology import Topology
 import json
 from itertools import accumulate
 
@@ -18,14 +18,18 @@ class Agent:
         policy, init_value_function, init_g = self.initialize(map_id, start_pos_index)
 
         old_policy = {}
+        iteration =0
         while policy != old_policy:
             value_function = self.evaluate_policy(
                 num_episode, policy, init_value_function, init_g
             )
+            print("Evaluation done")
             old_policy = policy
             policy = self.improve_policy(
                 map_id=map_id, policy=policy, value_function=value_function
             )
+            iteration+=1
+            print("Iteration: ", iteration)
 
         return policy
 
@@ -98,6 +102,7 @@ class Agent:
 
     def improve_policy(self, map_id, policy, value_function, stochastic_movement=False):
         greedy_policy = {}
+
         for state in policy.keys():
             self.game = Game(
                 map_id=map_id,
@@ -117,7 +122,10 @@ class Agent:
                 else:
                     action_values[action] = cost + value_function[self.game.get_state()]
                 self.game.reset_to_original_state()
-            best_action = min(action_values, key=action_values.get)
+            if action_values != {}:
+                best_action = min(action_values, key=action_values.get)
+            else:
+                best_action = policy[state]
             greedy_policy[state] = best_action
         return greedy_policy
 

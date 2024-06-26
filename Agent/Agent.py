@@ -1,6 +1,7 @@
 from ..Game.Game import Game
 from ..Game.Topology import Topology
 import json
+from itertools import accumulate
 
 
 class Agent:
@@ -65,42 +66,33 @@ class Agent:
     def evaluate_policy(self, num_episode, policy, init_value_function, init_g):
         t = 1
         value_function = init_value_function
-
         while t <= num_episode:
-            # TODO
             g = init_g
-            # Calculate g
-            # step 1: Get all states that were visited in the episode
-            # step 2: Calculate g for each of those state
-
-            g[state] = self.run_episode(policy)
-            value_function = self.update_value_function(
-                g, value_function, learn_rate=1 / t
-            )
+            self.update_g(policy, g)
+            self.update_value_function(g, value_function, learn_rate=1 / t)
             self.game.episode_reset()
             t += 1
         return value_function
 
-    def run_episode(self, policy):
-        g = [0]
+    def update_g(self, policy, g):
+        transition_costs = []
         visited_states = [self.game.get_state()]
         while not self.game.is_finished():
             action = policy[self.game.get_state()]
             cost = self.game.change_state(action)
-            g.insert(0, g[0] + cost)
+            transition_costs.append(cost)
             visited_states.append(self.game.get_state())
-        return g  # TODO
+        episode_g = list(reversed(list(accumulate(list(reversed(transition_costs))))))
+        for i in range(len(episode_g)):
+            g[visited_states[i]] = episode_g[i]
 
     def update_value_function(self, g, value_function, learn_rate):
         """
         Update value function in Monte Carlo algorithm
         """
-        new_value_function = {}
         for state in g.keys():
-            new_value_function[state] = value_function[state] + (
-                learn_rate * (g[state] - value_function[state])
-            )
-        return new_value_function
+            old_value = value_function[state]
+            value_function[state] = old_value + (learn_rate * (g[state] - old_value))
 
     def improve_policy(self, map_id, policy, value_function):
 
@@ -129,7 +121,7 @@ if __name__ == "__main__":
     agent = Agent()
     print("Start Agent")
     map_id = 1
-    policy = agent.find_optimal_policy(map_id=map_id, num_episode=10)
+    policy = agent.find_optimal_policy(map_id=map_id, start_pos_index=1, num_episode=10)
     print(f"Agent has found optimal policy for map {map_id}")
     with open(f"optimal_policy_map{map_id}.json", "w") as f:
         json.dump(policy, f)

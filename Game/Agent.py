@@ -15,7 +15,9 @@ class Agent:
         pass
 
     def find_optimal_policy(self, map_id, start_pos_index, num_episode):
-        policy, init_value_function, init_g = self.initialize(map_id, start_pos_index)
+        policy, init_value_function, init_g, start_pos = self.initialize(
+            map_id, start_pos_index
+        )
 
         iteration = 1
         optimal_policy_found = False
@@ -35,7 +37,6 @@ class Agent:
                 map_id=map_id, policy=policy, value_function=value_function
             )
             iteration += 1
-            start_pos = Topology.get_start_pos(map_id, start_pos_index)
             self.game = Game(
                 map_id=map_id,
                 x_pos=start_pos["x"],
@@ -87,7 +88,7 @@ class Agent:
                             policy[state] = action
                             init_value_function[state] = 0
                             init_g[state] = 0
-        return policy, init_value_function, init_g
+        return policy, init_value_function, init_g, start_pos
 
     def evaluate_policy(
         self, num_episode, policy, init_value_function: dict, init_g: dict
@@ -152,9 +153,7 @@ class Agent:
                 if policy[state] in actions_with_min_cost:
                     best_action = policy[state]
                 else:
-                    best_action = actions_with_min_cost[
-                        0
-                    ]  # min(action_costs, key=action_costs.get)
+                    best_action = actions_with_min_cost[0]
             else:
                 best_action = policy[state]
             greedy_policy[state] = best_action

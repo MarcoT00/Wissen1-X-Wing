@@ -234,7 +234,7 @@ class Game:
                     int(velocity["y"] / abs(velocity["y"])) if velocity["y"] != 0 else 0
                 )
                 if x_move != 0 and y_move != 0:
-                    if random.random() < 0.5:
+                    if self.MAP[self.pos["y"]][self.pos["x"] + x_move] == "R":
                         x_move = 0
                     else:
                         y_move = 0
@@ -255,7 +255,7 @@ class Game:
                         else 0
                     )
                     if x_move != 0 and y_move != 0:
-                        if random.random() < 0.5:
+                        if self.MAP[self.pos["y"]][self.pos["x"] + x_move] == "R":
                             x_move = 0
                         else:
                             y_move = 0

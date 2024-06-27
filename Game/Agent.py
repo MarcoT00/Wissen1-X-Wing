@@ -26,7 +26,8 @@ class Agent:
         optimal_policy_found = False
         changes = {}
         while not optimal_policy_found:
-            print("Iteration: ", iteration)
+            print("Iteration", iteration)
+            print("\tEvaluating policy...")
             value_function = self.evaluate_policy(
                 num_episode,
                 policy,
@@ -36,11 +37,13 @@ class Agent:
                 map_id,
                 stochastic_movement,
             )
+            print("\tPolicy evaluation completed.")
             # interesting_part_of_value_function = {}
             # for state, value in value_function.items():
             #     if value != 0:
             #         interesting_part_of_value_function[state] = value
             # print(dict(sorted(interesting_part_of_value_function.items())))
+            print("\tImproving policy...")
             old_policy = policy.copy()
             policy = self.improve_policy(
                 map_id=map_id,
@@ -56,7 +59,7 @@ class Agent:
                 x_speed=0,
                 y_speed=0,
             )
-
+            print("\tPolicy improvement completed.")
             changes = {}
             for state, action in policy.items():
                 if action != old_policy[state]:
@@ -64,7 +67,7 @@ class Agent:
             if len(changes) == 0:
                 optimal_policy_found = True
 
-            print(f"{len(changes)} changes from the previous policy")
+            print(f"\t{len(changes)} changes from the previous policy")
 
         return policy
 
@@ -235,7 +238,7 @@ class Agent:
 
 if __name__ == "__main__":
     agent = Agent()
-    print("Start Agent")
+    print("Agent on the hunt!")
     map_id = 1
     start_pos_index = 1
     stochastic_movement = False
@@ -247,9 +250,9 @@ if __name__ == "__main__":
     )
     stringified_optimal_policy = {}
     for state, action in optimal_policy.items():
-        stringified_optimal_policy[str(state)] = str(action)
+        stringified_optimal_policy[str(state)] = action
     print(
-        f"Agent has found optimal policy for start position index {start_pos_index} in map {map_id}"
+        f"Agent has found optimal policy for start position index {start_pos_index} in map {map_id}!"
     )
 
     folder_name = "optimal_policies"
@@ -262,7 +265,7 @@ if __name__ == "__main__":
         type = "deterministic"
 
     file_path = os.path.join(
-        folder_name, f"map{map_id}_index{start_pos_index}_{type}.json"
+        folder_name, f"{type}_map{map_id}_index{start_pos_index}.json"
     )
 
     with open(file_path, "w") as f:

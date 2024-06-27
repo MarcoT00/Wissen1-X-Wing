@@ -44,7 +44,7 @@ class Agent:
                 x_speed=0,
                 y_speed=0,
             )
-            # previous_changes = changes.copy()
+
             changes = {}
             for state, action in policy.items():
                 if action != old_policy[state]:
@@ -54,7 +54,7 @@ class Agent:
 
             print(f"{len(changes)} changes from the previous policy")
 
-        return policy, changes  # , previous_changes
+        return policy
 
     def initialize(self, map_id, start_pos_index):
         # state: (x, y, (x_speed, y_speed))
@@ -133,10 +133,8 @@ class Agent:
         episode_g = list(reversed(list(accumulate(list(reversed(transition_costs))))))
         for i in range(len(episode_g)):
             g[visited_states[i]] = episode_g[i]
-        # print("Begin calculating g for possible next states of visited states")
-        # count = 1
+
         for visited_state in visited_states[:-1]:
-            # print(visited_state)
             self.game = Game(
                 map_id=map_id,
                 x_pos=visited_state[0],
@@ -145,12 +143,9 @@ class Agent:
                 y_speed=visited_state[2][1],
             )
             selectable_actions = self.game.get_selectable_actions()
-            # print(selectable_actions)
             for action in selectable_actions:
-                # print(action)
                 self.game.change_state(action)
                 next_state_of_visited_state = self.game.get_state()
-                # print("Next", next_state_of_visited_state)
                 if next_state_of_visited_state in visited_states:
                     self.game.reset_to_original_state()
                     continue
@@ -164,14 +159,10 @@ class Agent:
                 path_cost_from_next_state = 0
                 while not temp_game.is_finished():
                     cost = temp_game.change_state(policy[temp_game.get_state()])
-                    # print(cost)
-                    # print(temp_game.get_state())
                     path_cost_from_next_state += cost
 
                 g[next_state_of_visited_state] = path_cost_from_next_state
                 self.game.reset_to_original_state()
-            # print(count)
-            # count += 1
 
     def update_value_function(self, g, value_function, learn_rate):
         """
@@ -223,13 +214,9 @@ if __name__ == "__main__":
     print("Start Agent")
     map_id = 1
     start_pos_index = 1
-    optimal_policy, changes = agent.find_optimal_policy(
+    optimal_policy = agent.find_optimal_policy(
         map_id=map_id, start_pos_index=start_pos_index, num_episode=1
     )
-
-    # for state in changes.keys():
-    #     print(f"{state}: {changes[state]} / {previous_changes[state]}")
-
     stringified_optimal_policy = {}
     for state, action in optimal_policy.items():
         stringified_optimal_policy[str(state)] = action

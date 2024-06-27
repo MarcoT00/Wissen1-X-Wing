@@ -17,7 +17,6 @@ class Agent:
     def find_optimal_policy(self, map_id, start_pos_index, num_episode):
         policy, init_value_function, init_g = self.initialize(map_id, start_pos_index)
 
-        old_policy = {}
         iteration = 1
         optimal_policy_found = False
         changes = {}
@@ -26,23 +25,35 @@ class Agent:
             value_function = self.evaluate_policy(
                 num_episode, policy, init_value_function, init_g
             )
-            old_policy = policy
+            interesting_part_of_value_function = {}
+            for state, value in value_function.items():
+                if value != 0:
+                    interesting_part_of_value_function[state] = value
+            print(dict(sorted(interesting_part_of_value_function.items())))
+            old_policy = policy.copy()
             policy = self.improve_policy(
                 map_id=map_id, policy=policy, value_function=value_function
             )
             iteration += 1
-
-            previous_changes = changes.copy()
+            start_pos = Topology.get_start_pos(map_id, start_pos_index)
+            self.game = Game(
+                map_id=map_id,
+                x_pos=start_pos["x"],
+                y_pos=start_pos["y"],
+                x_speed=0,
+                y_speed=0,
+            )
+            # previous_changes = changes.copy()
             changes = {}
-            for state in policy.keys():
-                if policy[state] != old_policy[state]:
-                    changes[state] = policy[state]
+            for state, action in policy.items():
+                if action != old_policy[state]:
+                    changes[state] = action
             if len(changes) == 0:
                 optimal_policy_found = True
 
             print(f"{len(changes)} changes from the previous policy")
 
-        return policy, changes, previous_changes
+        return policy, changes  # , previous_changes
 
     def initialize(self, map_id, start_pos_index):
         # state: (x, y, (x_speed, y_speed))
@@ -135,13 +146,15 @@ class Agent:
                 self.game.reset_to_original_state()
             if action_costs != {}:
                 min_cost = min(action_costs.values())
-                action_with_min_cost = [
+                actions_with_min_cost = [
                     action for action, cost in action_costs.items() if cost == min_cost
                 ]
-                if policy[state] in action_with_min_cost:
+                if policy[state] in actions_with_min_cost:
                     best_action = policy[state]
                 else:
-                    best_action = min(action_costs, key=action_costs.get)
+                    best_action = actions_with_min_cost[
+                        0
+                    ]  # min(action_costs, key=action_costs.get)
             else:
                 best_action = policy[state]
             greedy_policy[state] = best_action
@@ -153,12 +166,12 @@ if __name__ == "__main__":
     print("Start Agent")
     map_id = 1
     start_pos_index = 1
-    optimal_policy, changes, previous_changes = agent.find_optimal_policy(
+    optimal_policy, changes = agent.find_optimal_policy(
         map_id=map_id, start_pos_index=start_pos_index, num_episode=1
     )
 
-    for state in changes.keys():
-        print(f"{state}: {changes[state]} / {previous_changes[state]}")
+    # for state in changes.keys():
+    #     print(f"{state}: {changes[state]} / {previous_changes[state]}")
 
     stringified_optimal_policy = {}
     for state, action in optimal_policy.items():

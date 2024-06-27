@@ -25,13 +25,13 @@ class Agent:
         while not optimal_policy_found:
             print("Iteration: ", iteration)
             value_function = self.evaluate_policy(
-                num_episode, policy, init_value_function, init_g
+                num_episode, policy, init_value_function, init_g, start_pos, map_id
             )
-            interesting_part_of_value_function = {}
-            for state, value in value_function.items():
-                if value != 0:
-                    interesting_part_of_value_function[state] = value
-            print(dict(sorted(interesting_part_of_value_function.items())))
+            # interesting_part_of_value_function = {}
+            # for state, value in value_function.items():
+            #     if value != 0:
+            #         interesting_part_of_value_function[state] = value
+            # print(dict(sorted(interesting_part_of_value_function.items())))
             old_policy = policy.copy()
             policy = self.improve_policy(
                 map_id=map_id, policy=policy, value_function=value_function
@@ -84,26 +84,45 @@ class Agent:
                                 row,  # y
                                 (x_speed, y_speed),  # velocity
                             )
-                            action = self.game.ACTIONS[3]
+                            if (y_speed < 0 and x_speed != 0) or (
+                                y_speed <= -2 and x_speed == 0
+                            ):
+                                action = self.game.ACTIONS[5]  # ("H", "V")
+                            elif y_speed == -1 and x_speed == 0:
+                                action = self.game.ACTIONS[2]  # ("B", "V")
+                            else:
+                                action = self.game.ACTIONS[3]  # ("H", "B")
                             policy[state] = action
                             init_value_function[state] = 0
                             init_g[state] = 0
         return policy, init_value_function, init_g, start_pos
 
     def evaluate_policy(
-        self, num_episode, policy, init_value_function: dict, init_g: dict
+        self,
+        num_episode,
+        policy,
+        init_value_function: dict,
+        init_g: dict,
+        start_pos,
+        map_id,
     ):
         t = 1
         value_function = init_value_function.copy()
         while t <= num_episode:
             g = init_g.copy()
-            self.update_g(policy, g)
+            self.update_g(policy, g, map_id)
             self.update_value_function(g, value_function, learn_rate=1 / t)
-            self.game.reset_to_original_state()
+            self.game = Game(
+                map_id=map_id,
+                x_pos=start_pos["x"],
+                y_pos=start_pos["y"],
+                x_speed=0,
+                y_speed=0,
+            )
             t += 1
         return value_function
 
-    def update_g(self, policy, g):
+    def update_g(self, policy, g, map_id):
         transition_costs = []
         visited_states = [self.game.get_state()]
         while not self.game.is_finished():
@@ -114,6 +133,45 @@ class Agent:
         episode_g = list(reversed(list(accumulate(list(reversed(transition_costs))))))
         for i in range(len(episode_g)):
             g[visited_states[i]] = episode_g[i]
+        # print("Begin calculating g for possible next states of visited states")
+        # count = 1
+        for visited_state in visited_states[:-1]:
+            # print(visited_state)
+            self.game = Game(
+                map_id=map_id,
+                x_pos=visited_state[0],
+                y_pos=visited_state[1],
+                x_speed=visited_state[2][0],
+                y_speed=visited_state[2][1],
+            )
+            selectable_actions = self.game.get_selectable_actions()
+            # print(selectable_actions)
+            for action in selectable_actions:
+                # print(action)
+                self.game.change_state(action)
+                next_state_of_visited_state = self.game.get_state()
+                # print("Next", next_state_of_visited_state)
+                if next_state_of_visited_state in visited_states:
+                    self.game.reset_to_original_state()
+                    continue
+                temp_game = Game(
+                    map_id=map_id,
+                    x_pos=next_state_of_visited_state[0],
+                    y_pos=next_state_of_visited_state[1],
+                    x_speed=next_state_of_visited_state[2][0],
+                    y_speed=next_state_of_visited_state[2][1],
+                )
+                path_cost_from_next_state = 0
+                while not temp_game.is_finished():
+                    cost = temp_game.change_state(policy[temp_game.get_state()])
+                    # print(cost)
+                    # print(temp_game.get_state())
+                    path_cost_from_next_state += cost
+
+                g[next_state_of_visited_state] = path_cost_from_next_state
+                self.game.reset_to_original_state()
+            # print(count)
+            # count += 1
 
     def update_value_function(self, g, value_function, learn_rate):
         """

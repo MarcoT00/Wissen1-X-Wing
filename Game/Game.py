@@ -20,6 +20,7 @@ class Game:
     ]
     MAP = None
     START_POS = None
+    START_VELOCITY = None
 
     # Params that change after each episode
     timestep = None
@@ -31,26 +32,29 @@ class Game:
     def __init__(self, map_id, x_pos, y_pos, x_speed, y_speed):
         self.MAP = Topology.get_map(map_id)
         self.START_POS = {"x": x_pos, "y": y_pos}
+        self.START_VELOCITY = {"x": x_speed, "y": y_speed}
 
         self.timestep = 0
-        self.velocity = {"x": x_speed, "y": y_speed}
-        self.pos = self.START_POS
+        self.velocity = self.START_VELOCITY.copy()
+        self.pos = self.START_POS.copy()
         self.num_collision = 0
-        self.screen = Screen(self.MAP)
+        # self.screen = Screen(self.MAP)
+        self.screen = None
 
-    def episode_reset(
+    def reset_to_original_state(
         self,
     ):
         """
         Reset the game after each episode
         """
         self.timestep = 0
-        self.velocity = {"x": 0, "y": 0}
-        self.pos = self.START_POS
+        self.velocity = self.START_VELOCITY.copy()
+        self.pos = self.START_POS.copy()
         self.num_collision = 0
-        self.screen = Screen(self.MAP)
+        # self.screen = Screen(self.MAP)
+        self.screen = None
 
-    def change_state(self, selected_action: tuple):
+    def change_state(self, selected_action: tuple, stochastic_movement=False):
         self.timestep += 1
         cost = 0
 
@@ -122,15 +126,9 @@ class Game:
                 case ("y", -1):
                     return {"x": 1, "y": 0}
         else:
-            match colliding_movement_types:
-                case set([("x", 1), ("y", 1)]):
-                    return {"x": -1, "y": -1}
-                case set([("x", 1), ("y", -1)]):
-                    return {"x": -1, "y": 1}
-                case set([("x", -1), ("y", 1)]):
-                    return {"x": 1, "y": -1}
-                case set([("x", -1), ("y", -1)]):
-                    return {"x": 1, "y": 1}
+            first = colliding_movement_types[0]
+            second = colliding_movement_types[1]
+            return {first[0]: -1 * first[1], second[0]: -1 * second[1]}
 
     def check_escape(self, possible_routes: list):
         for route in possible_routes:
@@ -198,7 +196,13 @@ class Game:
 
         return possible_routes, possible_movement_sequences
 
-    def get_new_pos(self, velocity: dict, escape_is_possible: bool, escape_pos: dict):
+    def get_new_pos(
+        self,
+        velocity: dict,
+        escape_is_possible: bool,
+        escape_pos: dict,
+        stochastic_movement=False,
+    ):
         """if random.random() < 0.5:
             x_move = int(velocity["x"] / abs(velocity["x"])) if velocity["x"] != 0 else 0
             y_move = int(velocity["y"] / abs(velocity["y"])) if velocity["y"] != 0 else 0
@@ -221,7 +225,7 @@ class Game:
             }
 
     def get_new_velocity(self, action: tuple):
-        new_velocity = self.velocity
+        new_velocity = self.velocity.copy()
 
         if self.velocity["x"] in range(0, 5):
             match action[0]:
@@ -256,7 +260,9 @@ class Game:
         return new_velocity
 
     def get_selectable_actions(self):
-        if self.pos["x"] == 0 and self.pos["y"] == 0:
+        if self.is_finished():
+            return []
+        elif self.pos["x"] == 0 and self.pos["y"] == 0:
             return self.ACTIONS
         else:
             velocity_prediction = {}

@@ -2,6 +2,7 @@ from Game import Game
 from Topology import Topology
 import json
 from itertools import accumulate
+import os
 
 
 class Agent:
@@ -14,7 +15,9 @@ class Agent:
     def __init__(self):
         pass
 
-    def find_optimal_policy(self, map_id, start_pos_index, num_episode):
+    def find_optimal_policy(
+        self, map_id, start_pos_index, num_episode, stochastic_movement=False
+    ):
         policy, init_value_function, init_g, start_pos = self.initialize(
             map_id, start_pos_index
         )
@@ -25,7 +28,13 @@ class Agent:
         while not optimal_policy_found:
             print("Iteration: ", iteration)
             value_function = self.evaluate_policy(
-                num_episode, policy, init_value_function, init_g, start_pos, map_id
+                num_episode,
+                policy,
+                init_value_function,
+                init_g,
+                start_pos,
+                map_id,
+                stochastic_movement,
             )
             # interesting_part_of_value_function = {}
             # for state, value in value_function.items():
@@ -34,7 +43,10 @@ class Agent:
             # print(dict(sorted(interesting_part_of_value_function.items())))
             old_policy = policy.copy()
             policy = self.improve_policy(
-                map_id=map_id, policy=policy, value_function=value_function
+                map_id=map_id,
+                policy=policy,
+                value_function=value_function,
+                stochastic_movement=stochastic_movement,
             )
             iteration += 1
             self.game = Game(
@@ -105,12 +117,13 @@ class Agent:
         init_g: dict,
         start_pos,
         map_id,
+        stochastic_movement,
     ):
         t = 1
         value_function = init_value_function.copy()
         while t <= num_episode:
             g = init_g.copy()
-            self.update_g(policy, g, map_id)
+            self.update_g(policy, g, map_id, stochastic_movement)
             self.update_value_function(g, value_function, learn_rate=1 / t)
             self.game = Game(
                 map_id=map_id,
@@ -122,12 +135,12 @@ class Agent:
             t += 1
         return value_function
 
-    def update_g(self, policy, g, map_id):
+    def update_g(self, policy, g, map_id, stochastic_movement):
         transition_costs = []
         visited_states = [self.game.get_state()]
         while not self.game.is_finished():
             action = policy[self.game.get_state()]
-            cost = self.game.change_state(action)
+            cost = self.game.change_state(action, stochastic_movement)
             transition_costs.append(cost)
             visited_states.append(self.game.get_state())
         episode_g = list(reversed(list(accumulate(list(reversed(transition_costs))))))
@@ -144,24 +157,25 @@ class Agent:
             )
             selectable_actions = self.game.get_selectable_actions()
             for action in selectable_actions:
-                self.game.change_state(action)
-                next_state_of_visited_state = self.game.get_state()
-                if next_state_of_visited_state in visited_states:
+                self.game.change_state(action, stochastic_movement)
+                next_state = self.game.get_state()
+                if next_state in visited_states:
                     self.game.reset_to_original_state()
                     continue
                 temp_game = Game(
                     map_id=map_id,
-                    x_pos=next_state_of_visited_state[0],
-                    y_pos=next_state_of_visited_state[1],
-                    x_speed=next_state_of_visited_state[2][0],
-                    y_speed=next_state_of_visited_state[2][1],
+                    x_pos=next_state[0],
+                    y_pos=next_state[1],
+                    x_speed=next_state[2][0],
+                    y_speed=next_state[2][1],
                 )
                 path_cost_from_next_state = 0
                 while not temp_game.is_finished():
-                    cost = temp_game.change_state(policy[temp_game.get_state()])
+                    cost = temp_game.change_state(
+                        policy[temp_game.get_state()], stochastic_movement
+                    )
                     path_cost_from_next_state += cost
-
-                g[next_state_of_visited_state] = path_cost_from_next_state
+                g[next_state] = path_cost_from_next_state
                 self.game.reset_to_original_state()
 
     def update_value_function(self, g, value_function, learn_rate):
@@ -172,7 +186,7 @@ class Agent:
             old_value = value_function[state]
             value_function[state] = old_value + (learn_rate * (g[state] - old_value))
 
-    def improve_policy(self, map_id, policy, value_function, stochastic_movement=False):
+    def improve_policy(self, map_id, policy, value_function, stochastic_movement):
         greedy_policy = {}
 
         for state in policy.keys():
@@ -186,13 +200,23 @@ class Agent:
             selectable_actions = self.game.get_selectable_actions()
             action_costs = {}
             for action in selectable_actions:
-                cost = self.game.change_state(action)
+                cost = self.game.change_state(action, stochastic_movement=False)
+                deterministic_next_state = self.game.get_state()
                 if stochastic_movement:
-                    action_costs[action] = 0.5 + 0.5 * (
-                        cost + value_function[self.game.get_state()]
+                    self.game.reset_to_original_state()
+                    self.game.change_state(
+                        action,
+                        stochastic_movement=True,
+                        require_stochastic_next_state=True,
                     )
+                    stochastic_next_state = self.game.get_state()
+                    action_costs[action] = 0.5 * (
+                        cost + value_function[stochastic_next_state]
+                    ) + 0.5 * (cost + value_function[deterministic_next_state])
                 else:
-                    action_costs[action] = cost + value_function[self.game.get_state()]
+                    action_costs[action] = (
+                        cost + value_function[deterministic_next_state]
+                    )
                 self.game.reset_to_original_state()
             if action_costs != {}:
                 min_cost = min(action_costs.values())
@@ -214,14 +238,32 @@ if __name__ == "__main__":
     print("Start Agent")
     map_id = 1
     start_pos_index = 1
+    stochastic_movement = False
     optimal_policy = agent.find_optimal_policy(
-        map_id=map_id, start_pos_index=start_pos_index, num_episode=1
+        map_id=map_id,
+        start_pos_index=start_pos_index,
+        num_episode=1,
+        stochastic_movement=stochastic_movement,
     )
     stringified_optimal_policy = {}
     for state, action in optimal_policy.items():
-        stringified_optimal_policy[str(state)] = action
+        stringified_optimal_policy[str(state)] = str(action)
     print(
         f"Agent has found optimal policy for start position index {start_pos_index} in map {map_id}"
     )
-    with open(f"optimal_policy_map{map_id}_index{start_pos_index}.json", "w") as f:
-        json.dump(stringified_optimal_policy, f)
+
+    folder_name = "optimal_policies"
+    if not os.path.exists(folder_name):
+        os.makedirs(folder_name)
+
+    if stochastic_movement:
+        type = "stochastic"
+    else:
+        type = "deterministic"
+
+    file_path = os.path.join(
+        folder_name, f"map{map_id}_index{start_pos_index}_{type}.json"
+    )
+
+    with open(file_path, "w") as f:
+        json.dump(stringified_optimal_policy, f, indent=4)

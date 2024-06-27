@@ -54,7 +54,12 @@ class Game:
         # self.screen = Screen(self.MAP)
         self.screen = None
 
-    def change_state(self, selected_action: tuple, stochastic_movement=False):
+    def change_state(
+        self,
+        selected_action: tuple,
+        stochastic_movement,
+        require_stochastic_next_state=False,
+    ):
         self.timestep += 1
         cost = 0
 
@@ -75,6 +80,8 @@ class Game:
                 velocity=new_velocity,
                 escape_is_possible=True,
                 escape_pos=escape_pos,
+                stochastic_movement=stochastic_movement,
+                require_stochastic_next_state=require_stochastic_next_state,
             )
             cost = 1
         elif self.collision_is_certain(possible_routes):
@@ -93,13 +100,19 @@ class Game:
                 velocity=velocity_after_collision,
                 escape_is_possible=False,
                 escape_pos=None,
+                stochastic_movement=stochastic_movement,
+                require_stochastic_next_state=require_stochastic_next_state,
             )
             cost = 1 + 5
             self.num_collision += 1
         else:
             self.velocity = new_velocity
             self.pos = self.get_new_pos(
-                velocity=new_velocity, escape_is_possible=False, escape_pos=None
+                velocity=new_velocity,
+                escape_is_possible=False,
+                escape_pos=None,
+                stochastic_movement=stochastic_movement,
+                require_stochastic_next_state=require_stochastic_next_state,
             )
             cost = 1
 
@@ -201,28 +214,63 @@ class Game:
         velocity: dict,
         escape_is_possible: bool,
         escape_pos: dict,
-        stochastic_movement=False,
+        stochastic_movement,
+        require_stochastic_next_state,
     ):
-        """if random.random() < 0.5:
-            x_move = int(velocity["x"] / abs(velocity["x"])) if velocity["x"] != 0 else 0
-            y_move = int(velocity["y"] / abs(velocity["y"])) if velocity["y"] != 0 else 0
-            if x_move != 0 and y_move != 0:
-                if random.random() < 0.5:
-                    x_move = 0
-                else:
-                    y_move = 0
-            return {
-                "x": self.pos["x"] + x_move,
-                "y": self.pos["y"] - y_move,
-            }
-        else:"""
-        if escape_is_possible:
-            return escape_pos
+        if not stochastic_movement:
+            if escape_is_possible:
+                return escape_pos
+            else:
+                return {
+                    "x": self.pos["x"] + velocity["x"],
+                    "y": self.pos["y"] - velocity["y"],
+                }
         else:
-            return {
-                "x": self.pos["x"] + velocity["x"],
-                "y": self.pos["y"] - velocity["y"],
-            }
+            if require_stochastic_next_state:
+                x_move = (
+                    int(velocity["x"] / abs(velocity["x"])) if velocity["x"] != 0 else 0
+                )
+                y_move = (
+                    int(velocity["y"] / abs(velocity["y"])) if velocity["y"] != 0 else 0
+                )
+                if x_move != 0 and y_move != 0:
+                    if random.random() < 0.5:
+                        x_move = 0
+                    else:
+                        y_move = 0
+                return {
+                    "x": self.pos["x"] + x_move,
+                    "y": self.pos["y"] - y_move,
+                }
+            else:
+                if random.random() < 0.5:
+                    x_move = (
+                        int(velocity["x"] / abs(velocity["x"]))
+                        if velocity["x"] != 0
+                        else 0
+                    )
+                    y_move = (
+                        int(velocity["y"] / abs(velocity["y"]))
+                        if velocity["y"] != 0
+                        else 0
+                    )
+                    if x_move != 0 and y_move != 0:
+                        if random.random() < 0.5:
+                            x_move = 0
+                        else:
+                            y_move = 0
+                    return {
+                        "x": self.pos["x"] + x_move,
+                        "y": self.pos["y"] - y_move,
+                    }
+                else:
+                    if escape_is_possible:
+                        return escape_pos
+                    else:
+                        return {
+                            "x": self.pos["x"] + velocity["x"],
+                            "y": self.pos["y"] - velocity["y"],
+                        }
 
     def get_new_velocity(self, action: tuple):
         new_velocity = self.velocity.copy()

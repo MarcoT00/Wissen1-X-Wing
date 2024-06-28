@@ -167,7 +167,6 @@ class Agent:
                     self.game.change_state(action)
                     next_state = self.game.get_state()
                     self.game.reset_to_original_state()
-
                     g[next_state] = self.get_episode_cost(
                         policy, map_id, next_state, stochastic_movement
                     )
@@ -280,7 +279,7 @@ if __name__ == "__main__":
     print("Commencing Battle of Yavin!")
 
     MAP_ID = 1
-    START_POS_INDEX = 1
+    START_POS_INDEX = 5
     NUM_EPISODE = 1
     STOCHASTIC_MOVEMENT = False
     print(f"Entering start position {START_POS_INDEX} in map {MAP_ID}...")

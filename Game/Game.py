@@ -57,7 +57,7 @@ class Game:
     def change_state(
         self,
         selected_action: tuple,
-        stochastic_movement,
+        stochastic_movement=False,
         require_stochastic_next_state=False,
     ):
         self.timestep += 1
@@ -227,38 +227,14 @@ class Game:
                 }
         else:
             if require_stochastic_next_state:
-                x_move = (
-                    int(velocity["x"] / abs(velocity["x"])) if velocity["x"] != 0 else 0
-                )
-                y_move = (
-                    int(velocity["y"] / abs(velocity["y"])) if velocity["y"] != 0 else 0
-                )
-                if x_move != 0 and y_move != 0:
-                    if self.MAP[self.pos["y"]][self.pos["x"] + x_move] == "R":
-                        x_move = 0
-                    else:
-                        y_move = 0
+                x_move, y_move = self.get_stochastic_movements(velocity)
                 return {
                     "x": self.pos["x"] + x_move,
                     "y": self.pos["y"] - y_move,
                 }
             else:
                 if random.random() < 0.5:
-                    x_move = (
-                        int(velocity["x"] / abs(velocity["x"]))
-                        if velocity["x"] != 0
-                        else 0
-                    )
-                    y_move = (
-                        int(velocity["y"] / abs(velocity["y"]))
-                        if velocity["y"] != 0
-                        else 0
-                    )
-                    if x_move != 0 and y_move != 0:
-                        if self.MAP[self.pos["y"]][self.pos["x"] + x_move] == "R":
-                            x_move = 0
-                        else:
-                            y_move = 0
+                    x_move, y_move = self.get_stochastic_movements(velocity)
                     return {
                         "x": self.pos["x"] + x_move,
                         "y": self.pos["y"] - y_move,
@@ -271,6 +247,16 @@ class Game:
                             "x": self.pos["x"] + velocity["x"],
                             "y": self.pos["y"] - velocity["y"],
                         }
+
+    def get_stochastic_movements(self, velocity):
+        x_move = int(velocity["x"] / abs(velocity["x"])) if velocity["x"] != 0 else 0
+        y_move = int(velocity["y"] / abs(velocity["y"])) if velocity["y"] != 0 else 0
+        if x_move != 0 and y_move != 0:
+            if self.MAP[self.pos["y"]][self.pos["x"] + x_move] == "R":
+                x_move = 0
+            else:
+                y_move = 0
+        return x_move, y_move
 
     def get_new_velocity(self, action: tuple):
         new_velocity = self.velocity.copy()

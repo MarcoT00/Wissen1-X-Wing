@@ -10,9 +10,11 @@ class Simulate:
     num_collision = None
     policy = None
 
-    def __init__(self, map_id=1, start_pos_index=4, num_flight=100, type="deterministic"):
+    def __init__(
+        self, map_id=1, start_pos_index=0, num_flight=100, type="deterministic"
+    ):
         self.num_collision = 0
-        self.policy = self.read_policy_json_input(type, map_id,start_pos_index)
+        self.policy = self.read_policy_json_input(type, map_id, start_pos_index)
 
         # n_start = len(Topology.start_positions_map_1)
         start_pos = Topology.get_start_pos(map_id, start_pos_index)
@@ -22,7 +24,7 @@ class Simulate:
             y_pos=start_pos["y"],
             x_speed=0,
             y_speed=0,
-            show_screen=True
+            show_screen=True,
         )
         flight_costs = {}
         for i in range(1, 1 + num_flight):
@@ -54,7 +56,7 @@ class Simulate:
             time.sleep(1)
         return flight_cost
 
-    def read_policy_json_input(self, type, map_id,start_pos_index):
+    def read_policy_json_input(self, type, map_id, start_pos_index):
         folder_name = "optimal_policies"
         file_path = os.path.join(
             folder_name, f"{type}_map{map_id}_index{start_pos_index}.json"
@@ -67,4 +69,5 @@ class Simulate:
             policy[tuple_key] = tuple(value)
         return policy
 
-s = Simulate(num_flight=1)
+
+s = Simulate(map_id=1, start_pos_index=0, num_flight=1, type="deterministic")

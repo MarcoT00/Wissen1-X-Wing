@@ -1,6 +1,4 @@
 import pygame
-import sys
-import time
 
 
 class Screen:
@@ -26,7 +24,7 @@ class Screen:
             (self.X_SIZE * self.CELL_SIZE, self.Y_SIZE * self.CELL_SIZE)
         )
         pygame.font.init()
-        self.font = pygame.font.SysFont('Comic Sans MS', 26)
+        self.font = pygame.font.SysFont("Comic Sans MS", 26)
 
     def show_map(self):
         self.draw_grid(self.screen)
@@ -76,11 +74,14 @@ class Screen:
 
             text = self.font.render(str(cost), True, (0, 255, 255))
             text_rect = text.get_rect()
-            text_rect.center = (col * self.CELL_SIZE + self.CELL_SIZE // 2, row * self.CELL_SIZE + self.CELL_SIZE // 2)
+            text_rect.center = (
+                col * self.CELL_SIZE + self.CELL_SIZE // 2,
+                row * self.CELL_SIZE + self.CELL_SIZE // 2,
+            )
             self.screen.blit(text, text_rect)
 
-            #self.font.render_to(screen, (position['x'], position['y']), cost, (64, 86, 244))
-            #pygame.draw.circle(screen, (64, 86, 244), rect.center, self.CELL_SIZE // 4)
+            # self.font.render_to(screen, (position['x'], position['y']), cost, (64, 86, 244))
+            # pygame.draw.circle(screen, (64, 86, 244), rect.center, self.CELL_SIZE // 4)
 
     def get_rect(self, row, col):
         return pygame.Rect(

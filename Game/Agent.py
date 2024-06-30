@@ -24,7 +24,6 @@ class Agent:
 
         iteration = 1
         optimal_policy_found = False
-        changes = {}
         while not optimal_policy_found:
             print(f"|---Iteration {iteration}:")
             print("|\tEvaluating policy...")

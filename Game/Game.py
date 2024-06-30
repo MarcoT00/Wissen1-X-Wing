@@ -29,7 +29,7 @@ class Game:
     num_collision = None
     screen = None
 
-    def __init__(self, map_id, x_pos, y_pos, x_speed, y_speed):
+    def __init__(self, map_id, x_pos, y_pos, x_speed, y_speed, show_screen=False):
         self.MAP = Topology.get_map(map_id)
         self.START_POS = {"x": x_pos, "y": y_pos}
         self.START_VELOCITY = {"x": x_speed, "y": y_speed}
@@ -38,8 +38,9 @@ class Game:
         self.velocity = self.START_VELOCITY.copy()
         self.pos = self.START_POS.copy()
         self.num_collision = 0
-        # self.screen = Screen(self.MAP)
-        self.screen = None
+        self.show_screen = show_screen
+        if self.show_screen:
+            self.screen = Screen(self.MAP)
 
     def reset_to_original_state(
         self,
@@ -51,8 +52,8 @@ class Game:
         self.velocity = self.START_VELOCITY.copy()
         self.pos = self.START_POS.copy()
         self.num_collision = 0
-        # self.screen = Screen(self.MAP)
-        self.screen = None
+        if self.show_screen:
+            self.screen = Screen(self.MAP)
 
     def change_state(
         self,
@@ -316,7 +317,9 @@ class Game:
         return self.MAP[self.pos["y"]][self.pos["x"]] == "Z"
 
     def update_screen(self):
-        self.screen.show_map()
+        if self.show_screen:
+            self.screen.show_map()
 
-    def update_player(self):
-        self.screen.show_player(self.pos)
+    def update_player(self, cost):
+        if self.show_screen:
+            self.screen.show_player(self.pos, cost)

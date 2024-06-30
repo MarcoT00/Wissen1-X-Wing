@@ -272,42 +272,46 @@ class Agent:
             greedy_policy[state] = best_action
         return greedy_policy
 
-
+import time
 if __name__ == "__main__":
+    start_time = time.time()
     agent = Agent()
     print("Commencing Battle of Yavin!")
 
-    MAP_ID = 1
+    MAP_ID = 2
     START_POS_INDEX = 5
-    NUM_EPISODE = 1
     STOCHASTIC_MOVEMENT = False
-    print(f"Entering start position {START_POS_INDEX} in map {MAP_ID}...")
-    print("Calculating shortest path to fire position...")
+    NUM_EPISODE = 1
+    for START_POS_INDEX in range(0, 23):
+        print()
+        print(f"Entering start position {START_POS_INDEX} in map {MAP_ID}...")
+        print("Calculating shortest path to fire position...")
 
-    optimal_policy = agent.find_optimal_policy(
-        map_id=MAP_ID,
-        start_pos_index=START_POS_INDEX,
-        num_episode=NUM_EPISODE,
-        stochastic_movement=STOCHASTIC_MOVEMENT,
-    )
+        optimal_policy = agent.find_optimal_policy(
+            map_id=MAP_ID,
+            start_pos_index=START_POS_INDEX,
+            num_episode=NUM_EPISODE,
+            stochastic_movement=STOCHASTIC_MOVEMENT,
+        )
 
-    print(
-        f"Shortest path found for start position {START_POS_INDEX} in map {MAP_ID}! All ships, follow our lead!"
-    )
+        print(
+            f"Shortest path found for start position {START_POS_INDEX} in map {MAP_ID}! All ships, follow our lead!"
+        )
 
-    stringified_optimal_policy = {}
-    for state, action in optimal_policy.items():
-        stringified_optimal_policy[str(state)] = action
+        stringified_optimal_policy = {}
+        for state, action in optimal_policy.items():
+            stringified_optimal_policy[str(state)] = action
 
-    folder_name = "optimal_policies"
-    if not os.path.exists(folder_name):
-        os.makedirs(folder_name)
+        folder_name = "optimal_policies"
+        if not os.path.exists(folder_name):
+            os.makedirs(folder_name)
 
-    type = "stochastic" if STOCHASTIC_MOVEMENT else "deterministic"
+        type = "stochastic" if STOCHASTIC_MOVEMENT else "deterministic"
 
-    file_path = os.path.join(
-        folder_name, f"{type}_map{MAP_ID}_index{START_POS_INDEX}.json"
-    )
+        file_path = os.path.join(
+            folder_name, f"{type}_map{MAP_ID}_index{START_POS_INDEX}.json"
+        )
 
-    with open(file_path, "w") as f:
-        json.dump(stringified_optimal_policy, f, indent=4)
+        with open(file_path, "w") as f:
+            json.dump(stringified_optimal_policy, f, indent=4)
+    print("--- %s seconds ---" % (time.time() - start_time))

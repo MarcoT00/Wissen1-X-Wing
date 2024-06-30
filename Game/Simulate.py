@@ -54,6 +54,7 @@ class Simulate:
             flight_cost += cost
             game.update_player(flight_cost)
             time.sleep(1)
+        time.sleep(15)
         return flight_cost
 
     def read_policy_json_input(self, type, map_id, start_pos_index):
@@ -70,4 +71,4 @@ class Simulate:
         return policy
 
 
-s = Simulate(map_id=1, start_pos_index=0, num_flight=1, type="deterministic")
+s = Simulate(map_id=2, start_pos_index=10, num_flight=1, type="deterministic")

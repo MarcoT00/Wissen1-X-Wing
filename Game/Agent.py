@@ -98,14 +98,25 @@ class Agent:
                                 row,  # y
                                 (x_speed, y_speed),  # velocity
                             )
-                            if (y_speed < 0 and x_speed != 0) or (
-                                y_speed <= -2 and x_speed == 0
-                            ):
-                                action = self.game.ACTIONS[5]  # ("H", "V")
-                            elif y_speed == -1 and x_speed == 0:
-                                action = self.game.ACTIONS[2]  # ("B", "V")
+                            turning_row = 7 if map_id == 1 else 10
+                            if row >= turning_row:
+                                if (y_speed < 0 and x_speed != 0) or (
+                                    y_speed <= -2 and x_speed == 0
+                                ):
+                                    action = self.game.ACTIONS[5]  # ("H", "V")
+                                elif y_speed == -1 and x_speed == 0:
+                                    action = self.game.ACTIONS[2]  # ("B", "V")
+                                else:
+                                    action = self.game.ACTIONS[3]  # ("H", "B")
                             else:
-                                action = self.game.ACTIONS[3]  # ("H", "B")
+                                if (x_speed < 0 and y_speed != 0) or (
+                                    x_speed <= -2 and y_speed == 0
+                                ):
+                                    action = self.game.ACTIONS[7]  # ("V", "H")
+                                elif x_speed == -1 and y_speed == 0:
+                                    action = self.game.ACTIONS[6]  # ("V", "B")
+                                else:
+                                    action = self.game.ACTIONS[1]  # ("B", "H")
                             policy[state] = action
                             init_value_function[state] = 0
                             init_g[state] = 0
@@ -281,7 +292,6 @@ if __name__ == "__main__":
     print("Commencing Battle of Yavin!")
 
     MAP_ID = 2
-    START_POS_INDEX = 5
     STOCHASTIC_MOVEMENT = False
     NUM_EPISODE = 1
     for START_POS_INDEX in range(0, 23):

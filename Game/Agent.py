@@ -13,7 +13,7 @@ class Agent:
 
     game = None
 
-    def __init__(self, START_POS_INDEX=5, MAP_ID = 2):
+    def __init__(self, START_POS_INDEX=5, MAP_ID=2):
         print("Commencing Battle of Yavin!")
 
         STOCHASTIC_MOVEMENT = False
@@ -50,7 +50,6 @@ class Agent:
         with open(file_path, "w") as f:
             json.dump(stringified_optimal_policy, f, indent=4)
         return
-
 
     def find_optimal_policy(
         self, map_id, start_pos_index, num_episode, stochastic_movement=False
@@ -319,4 +318,3 @@ class Agent:
                 best_action = policy[state]
             greedy_policy[state] = best_action
         return greedy_policy
-

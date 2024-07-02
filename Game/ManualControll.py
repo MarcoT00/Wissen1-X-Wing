@@ -1,4 +1,5 @@
 from Game import Game
+
 game = Game(map_id=1, start_pos_index=1)
 
 print("To controll the X-Wing press W,A,S,D")

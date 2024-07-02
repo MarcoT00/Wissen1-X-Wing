@@ -2,7 +2,7 @@ import pygame
 
 
 class Screen:
-    CELL_SIZE = 30
+    CELL_SIZE = 26
     X_SIZE = None
     Y_SIZE = None
     MARK_COLOR = (255, 0, 0)  # Red color
@@ -24,7 +24,7 @@ class Screen:
             (self.X_SIZE * self.CELL_SIZE, self.Y_SIZE * self.CELL_SIZE)
         )
         pygame.font.init()
-        self.font = pygame.font.SysFont("Comic Sans MS", 26)
+        self.font = pygame.font.SysFont("Comic Sans MS", self.CELL_SIZE - 4)
 
     def show_map(self):
         self.draw_grid(self.screen)

@@ -21,7 +21,7 @@ class Agent:
         print(f"Entering start position {start_pos_index} in map {map_id}...")
         print("Calculating shortest path to fire position...")
 
-        optimal_policy = self.find_optimal_policy(
+        optimal_policy, policy_test_costs = self.find_optimal_policy(
             map_id=map_id,
             start_pos_index=start_pos_index,
             num_episode=num_episode,
@@ -31,6 +31,7 @@ class Agent:
         print(
             f"Shortest path found for start position {start_pos_index} in map {map_id}! All ships, follow our lead!"
         )
+        print(f"All test costs: {policy_test_costs}")
 
         stringified_optimal_policy = {}
         for state, action in optimal_policy.items():
@@ -58,6 +59,7 @@ class Agent:
 
         iteration = 1
         optimal_policy_found = False
+        policy_test_costs = []
         while not optimal_policy_found:
             print(f"|---Iteration {iteration}:")
             print("|\tEvaluating policy...")
@@ -102,7 +104,28 @@ class Agent:
 
             print(f"|\t{len(changes)} changes from the previous policy")
 
-        return policy
+            test_cost = self.test(
+                policy, map_id, start_pos, num_episode, stochastic_movement
+            )
+            policy_test_costs.append(test_cost)
+            print(f"Test cost with new policy: {test_cost}")
+
+        return policy, policy_test_costs
+
+    def test(self, policy, map_id, start_pos, num_episode, stochastic_movement):
+        t = 1
+        test_cost = 0
+        while t <= num_episode:
+            start_state = (start_pos["x"], start_pos["y"], (0, 0))
+            episode_cost = self.get_episode_cost(
+                policy,
+                map_id,
+                start_state,
+                stochastic_movement,
+            )
+            test_cost = test_cost + (1 / t) * (episode_cost - test_cost)
+            t += 1
+        return test_cost
 
     def initialize(self, map_id, start_pos_index):
         # state: (x, y, (x_speed, y_speed))
@@ -254,14 +277,14 @@ class Agent:
             x_speed=start_state[2][0],
             y_speed=start_state[2][1],
         )
-        path_cost_from_next_state = 0
+        path_cost_from_start_state = 0
         while not temp_game.is_finished():
             cost = temp_game.change_state(
                 selected_action=policy[temp_game.get_state()],
                 stochastic_movement=stochastic_movement,
             )
-            path_cost_from_next_state += cost
-        return path_cost_from_next_state
+            path_cost_from_start_state += cost
+        return path_cost_from_start_state
 
     def update_value_function(self, g, value_function, learn_rate):
         """
@@ -316,3 +339,6 @@ class Agent:
                 best_action = policy[state]
             greedy_policy[state] = best_action
         return greedy_policy
+
+
+Agent(start_pos_index=0, map_id=2, stochastic_movement=True, num_episode=100)

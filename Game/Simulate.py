@@ -71,4 +71,4 @@ class Simulate:
         return policy
 
 
-s = Simulate(map_id=2, start_pos_index=10, num_flight=1, type="deterministic")
+s = Simulate(map_id=2, start_pos_index=0, num_flight=1, type="deterministic")

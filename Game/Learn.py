@@ -14,9 +14,7 @@ def worker(start_pos_index):
 if __name__ == "__main__":
     start_time = time.time()
     max_workers = os.cpu_count() - 1
-    star_pos_list = []
-    for i in range(0, 23):
-        star_pos_list.append(i)
+    star_pos_list = [i for i in range(23)]
 
     with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
         concurrent.futures.wait(executor.map(worker, star_pos_list))

@@ -13,24 +13,23 @@ class Agent:
 
     game = None
 
-    def __init__(self, START_POS_INDEX=5, MAP_ID=2):
-        print("Commencing Battle of Yavin!")
+    def __init__(
+        self, start_pos_index=5, map_id=2, stochastic_movement=False, num_episode=1
+    ):
+        print("Commencing Battle of Yavin!\n")
 
-        STOCHASTIC_MOVEMENT = False
-        NUM_EPISODE = 1
-        print()
-        print(f"Entering start position {START_POS_INDEX} in map {MAP_ID}...")
+        print(f"Entering start position {start_pos_index} in map {map_id}...")
         print("Calculating shortest path to fire position...")
 
         optimal_policy = self.find_optimal_policy(
-            map_id=MAP_ID,
-            start_pos_index=START_POS_INDEX,
-            num_episode=NUM_EPISODE,
-            stochastic_movement=STOCHASTIC_MOVEMENT,
+            map_id=map_id,
+            start_pos_index=start_pos_index,
+            num_episode=num_episode,
+            stochastic_movement=stochastic_movement,
         )
 
         print(
-            f"Shortest path found for start position {START_POS_INDEX} in map {MAP_ID}! All ships, follow our lead!"
+            f"Shortest path found for start position {start_pos_index} in map {map_id}! All ships, follow our lead!"
         )
 
         stringified_optimal_policy = {}
@@ -41,15 +40,14 @@ class Agent:
         if not os.path.exists(folder_name):
             os.makedirs(folder_name)
 
-        type = "stochastic" if STOCHASTIC_MOVEMENT else "deterministic"
+        type = "stochastic" if stochastic_movement else "deterministic"
 
         file_path = os.path.join(
-            folder_name, f"{type}_map{MAP_ID}_index{START_POS_INDEX}.json"
+            folder_name, f"{type}_map{map_id}_index{start_pos_index}.json"
         )
 
         with open(file_path, "w") as f:
             json.dump(stringified_optimal_policy, f, indent=4)
-        return
 
     def find_optimal_policy(
         self, map_id, start_pos_index, num_episode, stochastic_movement=False

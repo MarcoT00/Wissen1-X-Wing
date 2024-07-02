@@ -255,6 +255,8 @@ class Game:
         if x_move != 0 and y_move != 0:
             if self.MAP[self.pos["y"]][self.pos["x"] + x_move] == "R":
                 x_move = 0
+            elif self.MAP[self.pos["y"] - y_move][self.pos["x"]] == "R":
+                y_move = 0
             else:
                 y_move = 0
         return x_move, y_move

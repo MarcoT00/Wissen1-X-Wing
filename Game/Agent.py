@@ -114,7 +114,7 @@ class Agent:
 
     def test(self, policy, map_id, start_pos, num_episode, stochastic_movement):
         t = 1
-        test_cost = 0
+        total_test_cost = 0
         while t <= num_episode:
             start_state = (start_pos["x"], start_pos["y"], (0, 0))
             episode_cost = self.get_episode_cost(
@@ -123,9 +123,9 @@ class Agent:
                 start_state,
                 stochastic_movement,
             )
-            test_cost = test_cost + (1 / t) * (episode_cost - test_cost)
+            total_test_cost += episode_cost
             t += 1
-        return test_cost
+        return total_test_cost / num_episode
 
     def initialize(self, map_id, start_pos_index):
         # state: (x, y, (x_speed, y_speed))
@@ -237,37 +237,37 @@ class Agent:
                     g[next_state] = self.get_episode_cost(
                         policy, map_id, next_state, stochastic_movement
                     )
-        else:
-            for visited_state in visited_states[:-1]:
-                self.game = Game(
-                    map_id=map_id,
-                    x_pos=visited_state[0],
-                    y_pos=visited_state[1],
-                    x_speed=visited_state[2][0],
-                    y_speed=visited_state[2][1],
-                )
-                selectable_actions = self.game.get_selectable_actions()
-                for action in selectable_actions:
-                    if action == policy[visited_state]:
-                        continue
+        # else:
+        #     for visited_state in visited_states[:-1]:
+        #         self.game = Game(
+        #             map_id=map_id,
+        #             x_pos=visited_state[0],
+        #             y_pos=visited_state[1],
+        #             x_speed=visited_state[2][0],
+        #             y_speed=visited_state[2][1],
+        #         )
+        #         selectable_actions = self.game.get_selectable_actions()
+        #         for action in selectable_actions:
+        #             if action == policy[visited_state]:
+        #                 continue
 
-                    self.game.change_state(action)
-                    deterministic_next_state = self.game.get_state()
-                    self.game.reset_to_original_state()
-                    g[deterministic_next_state] = self.get_episode_cost(
-                        policy, map_id, deterministic_next_state, stochastic_movement
-                    )
+        #             self.game.change_state(action)
+        #             deterministic_next_state = self.game.get_state()
+        #             self.game.reset_to_original_state()
+        #             g[deterministic_next_state] = self.get_episode_cost(
+        #                 policy, map_id, deterministic_next_state, stochastic_movement
+        #             )
 
-                    self.game.change_state(
-                        action,
-                        stochastic_movement=True,
-                        require_stochastic_next_state=True,
-                    )
-                    stochastic_next_state = self.game.get_state()
-                    self.game.reset_to_original_state()
-                    g[stochastic_next_state] = self.get_episode_cost(
-                        policy, map_id, stochastic_next_state, stochastic_movement
-                    )
+        #             self.game.change_state(
+        #                 action,
+        #                 stochastic_movement=True,
+        #                 require_stochastic_next_state=True,
+        #             )
+        #             stochastic_next_state = self.game.get_state()
+        #             self.game.reset_to_original_state()
+        #             g[stochastic_next_state] = self.get_episode_cost(
+        #                 policy, map_id, stochastic_next_state, stochastic_movement
+        #             )
 
     def get_episode_cost(self, policy, map_id, start_state, stochastic_movement):
         temp_game = Game(
@@ -341,5 +341,5 @@ class Agent:
         return greedy_policy
 
 
-if  __name__ == "__main__":
-    Agent(start_pos_index=0, map_id=2, stochastic_movement=True, num_episode=100)
+if __name__ == "__main__":
+    Agent(start_pos_index=0, map_id=1, stochastic_movement=True, num_episode=100)

@@ -17,6 +17,9 @@ if __name__ == "__main__":
     star_pos_list = [i for i in range(23)]
 
     with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
-        concurrent.futures.wait(executor.map(worker, star_pos_list))
+        try:
+            concurrent.futures.wait(executor.map(worker, star_pos_list))
+        except Exception as ex:
+            print(ex)
 
     print("--- %s seconds ---" % (time.time() - start_time))

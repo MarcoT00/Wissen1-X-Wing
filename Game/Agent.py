@@ -341,4 +341,5 @@ class Agent:
         return greedy_policy
 
 
-Agent(start_pos_index=0, map_id=2, stochastic_movement=True, num_episode=100)
+if  __name__ == "__main__":
+    Agent(start_pos_index=0, map_id=2, stochastic_movement=True, num_episode=100)

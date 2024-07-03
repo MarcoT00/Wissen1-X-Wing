@@ -21,7 +21,7 @@ class Agent:
         print(f"Entering start position {start_pos_index} in map {map_id}...")
         print("Calculating shortest path to fire position...")
 
-        optimal_policy, policy_test_costs = self.find_optimal_policy(
+        optimal_policy = self.find_optimal_policy(
             map_id=map_id,
             start_pos_index=start_pos_index,
             num_episode=num_episode,
@@ -31,7 +31,6 @@ class Agent:
         print(
             f"Shortest path found for start position {start_pos_index} in map {map_id}! All ships, follow our lead!"
         )
-        print(f"All test costs: {policy_test_costs}")
 
         stringified_optimal_policy = {}
         for state, action in optimal_policy.items():
@@ -59,9 +58,10 @@ class Agent:
 
         iteration = 1
         optimal_policy_found = False
-        policy_test_costs = []
         while not optimal_policy_found:
             print(f"|---Iteration {iteration}:")
+
+            # Policy Evaluation
             print("|\tEvaluating policy...")
             value_function = self.evaluate_policy(
                 num_episode,
@@ -73,13 +73,10 @@ class Agent:
                 stochastic_movement,
             )
             print("|\tPolicy evaluation completed.")
-            # interesting_part_of_value_function = {}
-            # for state, value in value_function.items():
-            #     if value != 0:
-            #         interesting_part_of_value_function[state] = value
-            # print(dict(sorted(interesting_part_of_value_function.items())))
+
+            # Policy Improvement
             print("|\tImproving policy...")
-            old_policy = policy.copy()
+            previous_policy = policy.copy()
             policy = self.improve_policy(
                 map_id=map_id,
                 policy=policy,
@@ -95,37 +92,44 @@ class Agent:
                 y_speed=0,
             )
             print("|\tPolicy improvement completed.")
+
             changes = {}
             for state, action in policy.items():
-                if action != old_policy[state]:
+                if action != previous_policy[state]:
                     changes[state] = action
             if len(changes) == 0:
                 optimal_policy_found = True
-
             print(f"|\t{len(changes)} changes from the previous policy")
 
-            test_cost = self.test(
+            previous_flight_cost = self.get_expected_flight_cost(
+                previous_policy, map_id, start_pos, num_episode, stochastic_movement
+            )
+            print(
+                f"|\tExpected flight cost with previous policy: {previous_flight_cost}"
+            )
+
+            new_flight_cost = self.get_expected_flight_cost(
                 policy, map_id, start_pos, num_episode, stochastic_movement
             )
-            policy_test_costs.append(test_cost)
-            print(f"Test cost with new policy: {test_cost}")
+            print(f"|\tExpected flight cost with new policy: {new_flight_cost}")
 
-        return policy, policy_test_costs
+        return policy
 
-    def test(self, policy, map_id, start_pos, num_episode, stochastic_movement):
+    def get_expected_flight_cost(
+        self, policy, map_id, start_pos, num_episode, stochastic_movement
+    ):
+        test_cost = 0
         t = 1
-        total_test_cost = 0
         while t <= num_episode:
-            start_state = (start_pos["x"], start_pos["y"], (0, 0))
             episode_cost = self.get_episode_cost(
                 policy,
                 map_id,
-                start_state,
+                (start_pos["x"], start_pos["y"], (0, 0)),
                 stochastic_movement,
             )
-            total_test_cost += episode_cost
+            test_cost = test_cost + (1 / t) * (episode_cost - test_cost)
             t += 1
-        return total_test_cost / num_episode
+        return test_cost
 
     def initialize(self, map_id, start_pos_index):
         # state: (x, y, (x_speed, y_speed))
@@ -237,6 +241,37 @@ class Agent:
                     g[next_state] = self.get_episode_cost(
                         policy, map_id, next_state, stochastic_movement
                     )
+        # else:
+        #     for visited_state in visited_states[:-1]:
+        #         self.game = Game(
+        #             map_id=map_id,
+        #             x_pos=visited_state[0],
+        #             y_pos=visited_state[1],
+        #             x_speed=visited_state[2][0],
+        #             y_speed=visited_state[2][1],
+        #         )
+        #         selectable_actions = self.game.get_selectable_actions()
+        #         for action in selectable_actions:
+        #             if action == policy[visited_state]:
+        #                 continue
+
+        #             self.game.change_state(action)
+        #             deterministic_next_state = self.game.get_state()
+        #             self.game.reset_to_original_state()
+        #             g[deterministic_next_state] = self.get_episode_cost(
+        #                 policy, map_id, deterministic_next_state, stochastic_movement
+        #             )
+
+        #             self.game.change_state(
+        #                 action,
+        #                 stochastic_movement=True,
+        #                 require_stochastic_next_state=True,
+        #             )
+        #             stochastic_next_state = self.game.get_state()
+        #             self.game.reset_to_original_state()
+        #             g[stochastic_next_state] = self.get_episode_cost(
+        #                 policy, map_id, stochastic_next_state, stochastic_movement
+        #             )
 
     def get_episode_cost(self, policy, map_id, start_state, stochastic_movement):
         temp_game = Game(
@@ -311,4 +346,4 @@ class Agent:
 
 
 if __name__ == "__main__":
-    Agent(start_pos_index=0, map_id=1, stochastic_movement=True, num_episode=100)
+    Agent(start_pos_index=0, map_id=1, stochastic_movement=True, num_episode=1000)

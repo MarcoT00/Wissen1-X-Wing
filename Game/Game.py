@@ -258,10 +258,11 @@ class Game:
             elif self.MAP[self.pos["y"] - y_move][self.pos["x"]] == "R":
                 y_move = 0
             else:
-                if random.random() < 0.5:
-                    x_move = 0
-                else:
-                    y_move = 0
+                y_move = 0
+                # if random.random() < 0.5:
+                #     x_move = 0
+                # else:
+                #     y_move = 0
         return x_move, y_move
 
     def get_new_velocity(self, action: tuple):

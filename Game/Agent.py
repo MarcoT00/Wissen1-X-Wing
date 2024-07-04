@@ -72,6 +72,13 @@ class Agent:
                 interim_folder_name,
                 iteration=0,
             )
+            self.save_visual(
+                policy=policy,
+                type="stochastic" if stochastic_movement else "deterministic",
+                iteration=0,
+                map_id=map_id,
+                start_pos_index=start_pos_index,
+            )
             iteration = 1
 
         optimal_policy_found = False

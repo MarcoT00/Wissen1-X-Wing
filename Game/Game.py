@@ -261,17 +261,17 @@ class Game:
         y_move = (
             int(velocity["y"] / abs(velocity["y"])) if velocity["y"] != 0 else 0
         )  # Either -1, 0, or 1
-        if (new_deter_x_pos + x_move) >= len(self.MAP[0]) or (
-            (new_deter_x_pos + x_move) < 0
+        if (
+            (new_deter_x_pos + x_move) >= len(self.MAP[0])
+            or (new_deter_x_pos + x_move) < 0
+            or self.MAP[new_deter_y_pos][new_deter_x_pos + x_move] == "R"
         ):
             x_move = 0
-        elif self.MAP[new_deter_y_pos][new_deter_x_pos + x_move] == "R":
-            x_move = 0
-        if (new_deter_y_pos - y_move) >= len(self.MAP) or (
-            (new_deter_y_pos - y_move) < 0
+        if (
+            (new_deter_y_pos - y_move) >= len(self.MAP)
+            or (new_deter_y_pos - y_move) < 0
+            or self.MAP[new_deter_y_pos - y_move][new_deter_x_pos] == "R"
         ):
-            y_move = 0
-        elif self.MAP[new_deter_y_pos - y_move][new_deter_x_pos] == "R":
             y_move = 0
         if x_move != 0 and y_move != 0:
             if random.random() < 0.5:

@@ -354,23 +354,30 @@ class Agent:
         #             if action == policy[visited_state]:
         #                 continue
 
-        #             self.game.change_state(action)
-        #             deterministic_next_state = self.game.get_state()
+        #             self.game.change_state(action, stochastic_movement)
+        #             next_state = self.game.get_state()
         #             self.game.reset_to_original_state()
-        #             g[deterministic_next_state] = self.get_episode_cost(
-        #                 policy, map_id, deterministic_next_state, stochastic_movement
+        #             g[next_state] = self.get_episode_cost(
+        #                 policy, map_id, next_state, stochastic_movement
         #             )
 
-        #             self.game.change_state(
-        #                 action,
-        #                 stochastic_movement=True,
-        #                 require_stochastic_next_state=True,
-        #             )
-        #             stochastic_next_state = self.game.get_state()
-        #             self.game.reset_to_original_state()
-        #             g[stochastic_next_state] = self.get_episode_cost(
-        #                 policy, map_id, stochastic_next_state, stochastic_movement
-        #             )
+        # self.game.change_state(action)
+        # deterministic_next_state = self.game.get_state()
+        # self.game.reset_to_original_state()
+        # g[deterministic_next_state] = self.get_episode_cost(
+        #     policy, map_id, deterministic_next_state, stochastic_movement
+        # )
+
+        # self.game.change_state(
+        #     action,
+        #     stochastic_movement=True,
+        #     require_stochastic_next_state=True,
+        # )
+        # stochastic_next_state = self.game.get_state()
+        # self.game.reset_to_original_state()
+        # g[stochastic_next_state] = self.get_episode_cost(
+        #     policy, map_id, stochastic_next_state, stochastic_movement
+        # )
 
     def get_episode_cost(self, policy, map_id, start_state, stochastic_movement):
         temp_game = Game(

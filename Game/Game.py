@@ -218,52 +218,52 @@ class Game:
         stochastic_movement,
         require_stochastic_next_state,
     ):
-        if not stochastic_movement:
-            if escape_is_possible:
-                return escape_pos
-            else:
-                return {
-                    "x": self.pos["x"] + velocity["x"],
-                    "y": self.pos["y"] - velocity["y"],
-                }
+        if escape_is_possible:
+            return escape_pos
         else:
-            if require_stochastic_next_state:
-                x_move, y_move = self.get_stochastic_movements(velocity)
+            new_deter_x_pos = self.pos["x"] + velocity["x"]
+            new_deter_y_pos = self.pos["y"] - velocity["y"]
+            if not stochastic_movement:  # deterministic movement
                 return {
-                    "x": self.pos["x"] + x_move,
-                    "y": self.pos["y"] - y_move,
+                    "x": new_deter_x_pos,
+                    "y": new_deter_y_pos,
                 }
             else:
-                if random.random() < 0.5:
-                    x_move, y_move = self.get_stochastic_movements(velocity)
-                    return {
-                        "x": self.pos["x"] + x_move,
-                        "y": self.pos["y"] - y_move,
-                    }
-                else:
-                    if escape_is_possible:
-                        return escape_pos
-                    else:
+                if not require_stochastic_next_state:
+                    if random.random() < 0.5:
                         return {
-                            "x": self.pos["x"] + velocity["x"],
-                            "y": self.pos["y"] - velocity["y"],
+                            "x": new_deter_x_pos,
+                            "y": new_deter_y_pos,
                         }
+                    else:
+                        return self.get_stochastic_next_state(
+                            velocity, new_deter_x_pos, new_deter_y_pos
+                        )
+                else:
+                    return self.get_stochastic_next_state(
+                        velocity, new_deter_x_pos, new_deter_y_pos
+                    )
 
-    def get_stochastic_movements(self, velocity):
-        x_move = int(velocity["x"] / abs(velocity["x"])) if velocity["x"] != 0 else 0
-        y_move = int(velocity["y"] / abs(velocity["y"])) if velocity["y"] != 0 else 0
+    def get_stochastic_next_state(self, velocity, new_deter_x_pos, new_deter_y_pos):
+        x_move = (
+            int(velocity["x"] / abs(velocity["x"])) if velocity["x"] != 0 else 0
+        )  # Either -1, 0, or 1
+        y_move = (
+            int(velocity["y"] / abs(velocity["y"])) if velocity["y"] != 0 else 0
+        )  # Either -1, 0, or 1
+        if self.MAP[new_deter_y_pos][new_deter_x_pos + x_move] == "R":
+            x_move = 0
+        if self.MAP[new_deter_y_pos - y_move][new_deter_x_pos] == "R":
+            y_move = 0
         if x_move != 0 and y_move != 0:
-            if self.MAP[self.pos["y"]][self.pos["x"] + x_move] == "R":
+            if random.random() < 0.5:
                 x_move = 0
-            elif self.MAP[self.pos["y"] - y_move][self.pos["x"]] == "R":
-                y_move = 0
             else:
                 y_move = 0
-                # if random.random() < 0.5:
-                #     x_move = 0
-                # else:
-                #     y_move = 0
-        return x_move, y_move
+        return {
+            "x": new_deter_x_pos + x_move,
+            "y": new_deter_y_pos - y_move,
+        }
 
     def get_new_velocity(self, action: tuple):
         new_velocity = self.velocity.copy()

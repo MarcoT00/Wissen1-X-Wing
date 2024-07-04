@@ -74,9 +74,9 @@ class Agent:
             )
             self.save_visual(
                 policy=policy,
-                type="stochastic" if stochastic_movement else "deterministic",
-                iteration=0,
                 map_id=map_id,
+                iteration=0,
+                stochastic_movement=stochastic_movement,
                 start_pos_index=start_pos_index,
             )
             iteration = 1
@@ -149,9 +149,9 @@ class Agent:
             )
             self.save_visual(
                 policy=policy,
-                type="stochastic" if stochastic_movement else "deterministic",
-                iteration=iteration,
                 map_id=map_id,
+                iteration=iteration,
+                stochastic_movement=stochastic_movement,
                 start_pos_index=start_pos_index,
             )
             print("|\tSave completed.")
@@ -443,7 +443,9 @@ class Agent:
             greedy_policy[state] = best_action
         return greedy_policy
 
-    def save_visual(self, policy, map_id, iteration, type, start_pos_index):
+    def save_visual(
+        self, policy, map_id, iteration, stochastic_movement, start_pos_index
+    ):
         episode_cost = 0
         start_pos = Topology.get_start_pos(map_id, start_pos_index)
         temp_game = Game(
@@ -458,12 +460,13 @@ class Agent:
         temp_game.update_player(episode_cost)
         while not temp_game.is_finished():
             action = policy[temp_game.get_state()]
-            cost = temp_game.change_state(action)
+            cost = temp_game.change_state(action, stochastic_movement)
             episode_cost += cost
             temp_game.update_player(episode_cost)
         folder_name = "image"
         if not os.path.exists(folder_name):
             os.makedirs(folder_name)
+        type = "stochastic" if stochastic_movement else "deterministic"
         img_file_name = os.path.join(
             folder_name, f"{type}_map{map_id}_index{start_pos_index}_ite{iteration}.jpg"
         )
@@ -474,8 +477,8 @@ class Agent:
 if __name__ == "__main__":
     Agent(
         start_pos_index=0,
-        map_id=2,
-        stochastic_movement=False,
-        num_episode=1,
+        map_id=1,
+        stochastic_movement=True,
+        num_episode=100,
         continue_from_last_interim=False,
     )

@@ -14,7 +14,12 @@ class Agent:
     game = None
 
     def __init__(
-        self, start_pos_index=5, map_id=2, stochastic_movement=False, num_episode=1
+        self,
+        start_pos_index,
+        map_id,
+        stochastic_movement,
+        num_episode,
+        continue_from_last_interim=False,
     ):
         print("Commencing Battle of Yavin!\n")
         print(f"Entering start position {start_pos_index} in map {map_id}...")
@@ -25,6 +30,7 @@ class Agent:
             start_pos_index=start_pos_index,
             num_episode=num_episode,
             stochastic_movement=stochastic_movement,
+            continue_from_last_interim=continue_from_last_interim,
         )
 
         print(
@@ -35,8 +41,9 @@ class Agent:
             map_id,
             start_pos_index,
             stochastic_movement,
-            optimal_policy,
-            "optimal_policies",
+            policy=optimal_policy,
+            folder_name="optimal_policies",
+            iteration=None,
         )
 
     def find_optimal_policy(
@@ -45,15 +52,15 @@ class Agent:
         start_pos_index,
         num_episode,
         stochastic_movement=False,
-        continue_from_interim=False,
+        continue_from_last_interim=False,
     ):
         policy, init_value_function, init_g, start_pos = self.initialize(
             map_id, start_pos_index
         )
 
         interim_folder_name = "interim_policies"
-        if continue_from_interim:
-            policy = self.read_policy_json_input(
+        if continue_from_last_interim:
+            policy, iteration = self.read_last_interim_policy(
                 map_id, start_pos_index, stochastic_movement, interim_folder_name
             )
         else:
@@ -63,9 +70,10 @@ class Agent:
                 stochastic_movement,
                 policy,
                 interim_folder_name,
+                iteration=0,
             )
+            iteration = 1
 
-        iteration = 1
         optimal_policy_found = False
         while not optimal_policy_found:
             print(f"|---Iteration {iteration}:")
@@ -92,7 +100,6 @@ class Agent:
                 value_function=value_function,
                 stochastic_movement=stochastic_movement,
             )
-            iteration += 1
             self.game = Game(
                 map_id=map_id,
                 x_pos=start_pos["x"],
@@ -131,28 +138,44 @@ class Agent:
                 stochastic_movement,
                 policy,
                 interim_folder_name,
+                iteration=iteration,
             )
             print("|\tSave completed.")
 
+            iteration += 1
+
         return policy
 
-    def read_policy_json_input(
+    def read_last_interim_policy(
         self, map_id, start_pos_index, stochastic_movement, interim_folder_name
     ):
         type = "stochastic" if stochastic_movement else "deterministic"
-        file_path = os.path.join(
-            interim_folder_name, f"{type}_map{map_id}_index{start_pos_index}.json"
-        )
+        last_interim_file = sorted(
+            [
+                f
+                for f in os.listdir(interim_folder_name)
+                if f"{type}_map{map_id}_index{start_pos_index}" in f
+            ]
+        )[-1]
+        last_iteration = int(last_interim_file.split(".")[0][-1])
+        current_iteration = last_iteration + 1
+        file_path = os.path.join(interim_folder_name, last_interim_file)
         with open(file_path) as f:
             policy_input = json.load(f)
         policy = {}
         for key, value in policy_input.items():
             tuple_key = ast.literal_eval(key)
             policy[tuple_key] = tuple(value)
-        return policy
+        return policy, current_iteration
 
     def save_policy(
-        self, map_id, start_pos_index, stochastic_movement, policy, folder_name
+        self,
+        map_id,
+        start_pos_index,
+        stochastic_movement,
+        policy,
+        folder_name,
+        iteration,
     ):
         stringified_policy = {}
         for state, action in policy.items():
@@ -162,16 +185,23 @@ class Agent:
             os.makedirs(folder_name)
 
         type = "stochastic" if stochastic_movement else "deterministic"
-        file_path = os.path.join(
-            folder_name, f"{type}_map{map_id}_index{start_pos_index}.json"
-        )
+        if iteration is not None:
+            file_path = os.path.join(
+                folder_name,
+                f"{type}_map{map_id}_index{start_pos_index}_ite{iteration}.json",
+            )
+        else:
+            file_path = os.path.join(
+                folder_name,
+                f"{type}_map{map_id}_index{start_pos_index}.json",
+            )
         with open(file_path, "w") as f:
             json.dump(stringified_policy, f, indent=4)
 
     def get_expected_flight_cost(
         self, policy, map_id, start_pos, num_episode, stochastic_movement
     ):
-        test_cost = 0
+        expected_flight_cost = 0
         t = 1
         while t <= num_episode:
             episode_cost = self.get_episode_cost(
@@ -180,9 +210,11 @@ class Agent:
                 (start_pos["x"], start_pos["y"], (0, 0)),
                 stochastic_movement,
             )
-            test_cost = test_cost + (1 / t) * (episode_cost - test_cost)
+            expected_flight_cost = expected_flight_cost + (1 / t) * (
+                episode_cost - expected_flight_cost
+            )
             t += 1
-        return test_cost
+        return expected_flight_cost
 
     def initialize(self, map_id, start_pos_index):
         # state: (x, y, (x_speed, y_speed))
@@ -274,26 +306,26 @@ class Agent:
         for i in range(len(episode_g)):
             g[visited_states[i]] = episode_g[i]
 
-        # if not stochastic_movement:
-        #     for visited_state in visited_states[:-1]:
-        #         self.game = Game(
-        #             map_id=map_id,
-        #             x_pos=visited_state[0],
-        #             y_pos=visited_state[1],
-        #             x_speed=visited_state[2][0],
-        #             y_speed=visited_state[2][1],
-        #         )
-        #         selectable_actions = self.game.get_selectable_actions()
-        #         for action in selectable_actions:
-        #             if action == policy[visited_state]:
-        #                 continue
+        if not stochastic_movement:
+            for visited_state in visited_states[:-1]:
+                self.game = Game(
+                    map_id=map_id,
+                    x_pos=visited_state[0],
+                    y_pos=visited_state[1],
+                    x_speed=visited_state[2][0],
+                    y_speed=visited_state[2][1],
+                )
+                selectable_actions = self.game.get_selectable_actions()
+                for action in selectable_actions:
+                    if action == policy[visited_state]:
+                        continue
 
-        #             self.game.change_state(action)
-        #             next_state = self.game.get_state()
-        #             self.game.reset_to_original_state()
-        #             g[next_state] = self.get_episode_cost(
-        #                 policy, map_id, next_state, stochastic_movement
-        #             )
+                    self.game.change_state(action)
+                    next_state = self.game.get_state()
+                    self.game.reset_to_original_state()
+                    g[next_state] = self.get_episode_cost(
+                        policy, map_id, next_state, stochastic_movement
+                    )
         # else:
         #     for visited_state in visited_states[:-1]:
         #         self.game = Game(
@@ -399,4 +431,10 @@ class Agent:
 
 
 if __name__ == "__main__":
-    Agent(start_pos_index=0, map_id=1, stochastic_movement=False, num_episode=100)
+    Agent(
+        start_pos_index=0,
+        map_id=2,
+        stochastic_movement=False,
+        num_episode=1,
+        continue_from_last_interim=False,
+    )

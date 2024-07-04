@@ -123,7 +123,7 @@ class Game:
         # Each elem of each sequence is one of the following types:
         # (x, 1), (x, -1), (y, 1), (y, -1) : Right, Left, Up, Down
         # All sequences have at least one type and at most two types
-        # Last elem is the movement that causes collision
+        # Last elem in a movement sequence is the movement that causes collision
         colliding_movements = []
         for movement_seq in possible_movement_sequences:
             colliding_movements.append(movement_seq[-1])

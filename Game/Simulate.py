@@ -79,10 +79,10 @@ class Simulate:
 
 
 s = Simulate(
-    map_id=2,
+    map_id=1,
     start_pos_index=0,
     num_flight=1,
     type="deterministic",
-    folder_name="interim_policies",
-    iteration=1,
+    folder_name="optimal_policies",
+    iteration=None,
 )

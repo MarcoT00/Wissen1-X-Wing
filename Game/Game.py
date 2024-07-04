@@ -140,9 +140,19 @@ class Game:
                 case ("y", -1):
                     return {"x": 1, "y": 0}
         else:
-            first = colliding_movement_types[0]
-            second = colliding_movement_types[1]
-            return {first[0]: -1 * first[1], second[0]: -1 * second[1]}
+            if ("x", 1) in colliding_movement_types:
+                if ("y", 1) in colliding_movement_types:
+                    return {
+                        "x": 1,
+                        "y": 0,
+                    }  # This case will properly not happen in the two given maps
+                elif ("y", -1) in colliding_movement_types:
+                    return {"x": 0, "y": 1}
+            elif ("x", -1) in colliding_movement_types:
+                if ("y", 1) in colliding_movement_types:
+                    return {"x": 1, "y": 0}
+                elif ("y", -1) in colliding_movement_types:
+                    return {"x": 0, "y": 1}
 
     def check_escape(self, possible_routes: list):
         for route in possible_routes:

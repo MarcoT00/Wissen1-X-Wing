@@ -28,5 +28,3 @@ while True:
     print(action)
     cost = game.change_state(action)
     game.update_player(cost=cost)
-    #game.save_as_image(f"./image/{type}_map{MAP_ID}_index{start_pos_index}.jpg")
-    #game.save_as_image(f"./image/deterministic_map{MAP_ID}_index{start_pos_index}.jpg")

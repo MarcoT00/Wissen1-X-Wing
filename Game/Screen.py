@@ -87,3 +87,13 @@ class Screen:
         return pygame.Rect(
             col * self.CELL_SIZE, row * self.CELL_SIZE, self.CELL_SIZE, self.CELL_SIZE
         )
+
+    def save_as_image(self, name):
+        '''image = pygame.Surface((self.X_SIZE, self.Y_SIZE))
+        image.blit(self.screen, (self.X_SIZE, self.Y_SIZE), (self.X_SIZE, self.Y_SIZE))  # Blit portion of the display to the image
+        pygame.image.save(image, name)  # Save the image to the disk'''
+        pygame.image.save(self.screen, name)
+
+    def close(self):
+        pygame.display.quit()
+        pygame.quit()

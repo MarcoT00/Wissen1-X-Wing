@@ -140,6 +140,13 @@ class Agent:
                 interim_folder_name,
                 iteration=iteration,
             )
+            self.save_visual(
+                policy=policy,
+                type="stochastic" if stochastic_movement else "deterministic",
+                iteration=iteration,
+                map_id=map_id,
+                start_pos_index=start_pos_index,
+            )
             print("|\tSave completed.")
 
             iteration += 1
@@ -428,6 +435,33 @@ class Agent:
                 best_action = policy[state]
             greedy_policy[state] = best_action
         return greedy_policy
+
+    def save_visual(self, policy, map_id, iteration, type, start_pos_index):
+        episode_cost = 0
+        start_pos = Topology.get_start_pos(map_id, start_pos_index)
+        temp_game = Game(
+            map_id=map_id,
+            x_pos=start_pos["x"],
+            y_pos=start_pos["y"],
+            x_speed=0,
+            y_speed=0,
+            show_screen=True,
+        )
+        temp_game.update_screen()
+        temp_game.update_player(episode_cost)
+        while not temp_game.is_finished():
+            action = policy[temp_game.get_state()]
+            cost = temp_game.change_state(action)
+            episode_cost += cost
+            temp_game.update_player(episode_cost)
+        folder_name = "image"
+        if not os.path.exists(folder_name):
+            os.makedirs(folder_name)
+        img_file_name = os.path.join(
+            folder_name, f"{type}_map{map_id}_index{start_pos_index}_ite{iteration}.jpg"
+        )
+        temp_game.save_as_image(name=img_file_name)
+        temp_game.close_window()
 
 
 if __name__ == "__main__":

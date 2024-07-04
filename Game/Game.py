@@ -334,3 +334,11 @@ class Game:
     def update_player(self, cost):
         if self.SHOW_SCREEN:
             self.screen.show_player(self.pos, cost)
+
+    def close_window(self):
+        if self.show_screen:
+            self.screen.close()
+
+    def save_as_image(self, name):
+        if self.show_screen:
+            self.screen.save_as_image(name=name)

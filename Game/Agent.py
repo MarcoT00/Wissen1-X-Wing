@@ -480,5 +480,5 @@ if __name__ == "__main__":
         map_id=1,
         stochastic_movement=True,
         num_episode=100,
-        continue_from_last_interim=True,
+        continue_from_last_interim=False,
     )

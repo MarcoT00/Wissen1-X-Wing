@@ -1,13 +1,15 @@
 from Game import Game
+from Topology import Topology
 
-game = Game(map_id=1, start_pos_index=1)
+start_pos_index=0
+MAP_ID=1
+start_pos = Topology.get_start_pos(map_id=MAP_ID, start_pos_index=start_pos_index)
+game = Game(map_id=MAP_ID, x_pos=start_pos["x"], y_pos=start_pos["y"], x_speed=0, y_speed=0, show_screen=True)
 
 print("To controll the X-Wing press W,A,S,D")
 game.update_screen()
-game.update_player()
 
 while True:
-    game.update_player()
     print(f"Speed: {game.velocity}")
     print(f"Pos: {game.pos}")
     key = input()
@@ -24,4 +26,7 @@ while True:
         case _:
             action = game.ACTIONS[4]
     print(action)
-    game.change_state(action)
+    cost = game.change_state(action)
+    game.update_player(cost=cost)
+    #game.save_as_image(f"./image/{type}_map{MAP_ID}_index{start_pos_index}.jpg")
+    #game.save_as_image(f"./image/deterministic_map{MAP_ID}_index{start_pos_index}.jpg")

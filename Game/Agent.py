@@ -3,7 +3,7 @@ from Topology import Topology
 import json
 from itertools import accumulate
 import os
-import time
+import ast
 
 
 class Agent:
@@ -17,7 +17,6 @@ class Agent:
         self, start_pos_index=5, map_id=2, stochastic_movement=False, num_episode=1
     ):
         print("Commencing Battle of Yavin!\n")
-
         print(f"Entering start position {start_pos_index} in map {map_id}...")
         print("Calculating shortest path to fire position...")
 
@@ -32,29 +31,39 @@ class Agent:
             f"Shortest path found for start position {start_pos_index} in map {map_id}! All ships, follow our lead!"
         )
 
-        stringified_optimal_policy = {}
-        for state, action in optimal_policy.items():
-            stringified_optimal_policy[str(state)] = action
-
-        folder_name = "optimal_policies"
-        if not os.path.exists(folder_name):
-            os.makedirs(folder_name)
-
-        type = "stochastic" if stochastic_movement else "deterministic"
-
-        file_path = os.path.join(
-            folder_name, f"{type}_map{map_id}_index{start_pos_index}.json"
+        self.save_policy(
+            map_id,
+            start_pos_index,
+            stochastic_movement,
+            optimal_policy,
+            "optimal_policies",
         )
 
-        with open(file_path, "w") as f:
-            json.dump(stringified_optimal_policy, f, indent=4)
-
     def find_optimal_policy(
-        self, map_id, start_pos_index, num_episode, stochastic_movement=False
+        self,
+        map_id,
+        start_pos_index,
+        num_episode,
+        stochastic_movement=False,
+        continue_from_interim=False,
     ):
         policy, init_value_function, init_g, start_pos = self.initialize(
             map_id, start_pos_index
         )
+
+        interim_folder_name = "interim_policies"
+        if continue_from_interim:
+            policy = self.read_policy_json_input(
+                map_id, start_pos_index, stochastic_movement, interim_folder_name
+            )
+        else:
+            self.save_policy(
+                map_id,
+                start_pos_index,
+                stochastic_movement,
+                policy,
+                interim_folder_name,
+            )
 
         iteration = 1
         optimal_policy_found = False
@@ -93,6 +102,7 @@ class Agent:
             )
             print("|\tPolicy improvement completed.")
 
+            # Calculate changes
             changes = {}
             for state, action in policy.items():
                 if action != previous_policy[state]:
@@ -101,19 +111,62 @@ class Agent:
                 optimal_policy_found = True
             print(f"|\t{len(changes)} changes from the previous policy")
 
+            # Calculate expected flight cost with previous and new policies
             previous_flight_cost = self.get_expected_flight_cost(
                 previous_policy, map_id, start_pos, num_episode, stochastic_movement
             )
             print(
                 f"|\tExpected flight cost with previous policy: {previous_flight_cost}"
             )
-
             new_flight_cost = self.get_expected_flight_cost(
                 policy, map_id, start_pos, num_episode, stochastic_movement
             )
             print(f"|\tExpected flight cost with new policy: {new_flight_cost}")
 
+            # Save interim results
+            print("|\tSaving new policy...")
+            self.save_policy(
+                map_id,
+                start_pos_index,
+                stochastic_movement,
+                policy,
+                interim_folder_name,
+            )
+            print("|\tSave completed.")
+
         return policy
+
+    def read_policy_json_input(
+        self, map_id, start_pos_index, stochastic_movement, interim_folder_name
+    ):
+        type = "stochastic" if stochastic_movement else "deterministic"
+        file_path = os.path.join(
+            interim_folder_name, f"{type}_map{map_id}_index{start_pos_index}.json"
+        )
+        with open(file_path) as f:
+            policy_input = json.load(f)
+        policy = {}
+        for key, value in policy_input.items():
+            tuple_key = ast.literal_eval(key)
+            policy[tuple_key] = tuple(value)
+        return policy
+
+    def save_policy(
+        self, map_id, start_pos_index, stochastic_movement, policy, folder_name
+    ):
+        stringified_policy = {}
+        for state, action in policy.items():
+            stringified_policy[str(state)] = action
+
+        if not os.path.exists(folder_name):
+            os.makedirs(folder_name)
+
+        type = "stochastic" if stochastic_movement else "deterministic"
+        file_path = os.path.join(
+            folder_name, f"{type}_map{map_id}_index{start_pos_index}.json"
+        )
+        with open(file_path, "w") as f:
+            json.dump(stringified_policy, f, indent=4)
 
     def get_expected_flight_cost(
         self, policy, map_id, start_pos, num_episode, stochastic_movement
@@ -221,26 +274,26 @@ class Agent:
         for i in range(len(episode_g)):
             g[visited_states[i]] = episode_g[i]
 
-        if not stochastic_movement:
-            for visited_state in visited_states[:-1]:
-                self.game = Game(
-                    map_id=map_id,
-                    x_pos=visited_state[0],
-                    y_pos=visited_state[1],
-                    x_speed=visited_state[2][0],
-                    y_speed=visited_state[2][1],
-                )
-                selectable_actions = self.game.get_selectable_actions()
-                for action in selectable_actions:
-                    if action == policy[visited_state]:
-                        continue
+        # if not stochastic_movement:
+        #     for visited_state in visited_states[:-1]:
+        #         self.game = Game(
+        #             map_id=map_id,
+        #             x_pos=visited_state[0],
+        #             y_pos=visited_state[1],
+        #             x_speed=visited_state[2][0],
+        #             y_speed=visited_state[2][1],
+        #         )
+        #         selectable_actions = self.game.get_selectable_actions()
+        #         for action in selectable_actions:
+        #             if action == policy[visited_state]:
+        #                 continue
 
-                    self.game.change_state(action)
-                    next_state = self.game.get_state()
-                    self.game.reset_to_original_state()
-                    g[next_state] = self.get_episode_cost(
-                        policy, map_id, next_state, stochastic_movement
-                    )
+        #             self.game.change_state(action)
+        #             next_state = self.game.get_state()
+        #             self.game.reset_to_original_state()
+        #             g[next_state] = self.get_episode_cost(
+        #                 policy, map_id, next_state, stochastic_movement
+        #             )
         # else:
         #     for visited_state in visited_states[:-1]:
         #         self.game = Game(
@@ -346,4 +399,4 @@ class Agent:
 
 
 if __name__ == "__main__":
-    Agent(start_pos_index=0, map_id=1, stochastic_movement=True, num_episode=1000)
+    Agent(start_pos_index=0, map_id=1, stochastic_movement=False, num_episode=100)

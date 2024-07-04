@@ -33,26 +33,26 @@ class Game:
         self.MAP = Topology.get_map(map_id)
         self.START_POS = {"x": x_pos, "y": y_pos}
         self.START_VELOCITY = {"x": x_speed, "y": y_speed}
+        self.SHOW_SCREEN = show_screen
 
         self.timestep = 0
         self.velocity = self.START_VELOCITY.copy()
         self.pos = self.START_POS.copy()
         self.num_collision = 0
-        self.show_screen = show_screen
-        if self.show_screen:
+        if self.SHOW_SCREEN:
             self.screen = Screen(self.MAP)
 
     def reset_to_original_state(
         self,
     ):
         """
-        Reset the game after each episode
+        Reset the game to original state (when game is initialized)
         """
         self.timestep = 0
         self.velocity = self.START_VELOCITY.copy()
         self.pos = self.START_POS.copy()
         self.num_collision = 0
-        if self.show_screen:
+        if self.SHOW_SCREEN:
             self.screen = Screen(self.MAP)
 
     def change_state(
@@ -303,7 +303,12 @@ class Game:
     def get_selectable_actions(self):
         if self.is_finished():
             return []
-        elif self.pos["x"] == 0 and self.pos["y"] == 0:
+        elif (
+            self.pos["x"] == 0
+            and self.pos["y"] == 0
+            and self.velocity["x"] == 0
+            and self.velocity["y"] == 0
+        ):
             return self.ACTIONS
         else:
             velocity_prediction = {}
@@ -323,9 +328,9 @@ class Game:
         return self.MAP[self.pos["y"]][self.pos["x"]] == "Z"
 
     def update_screen(self):
-        if self.show_screen:
+        if self.SHOW_SCREEN:
             self.screen.show_map()
 
     def update_player(self, cost):
-        if self.show_screen:
+        if self.SHOW_SCREEN:
             self.screen.show_player(self.pos, cost)

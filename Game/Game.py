@@ -336,9 +336,9 @@ class Game:
             self.screen.show_player(self.pos, cost)
 
     def close_window(self):
-        if self.show_screen:
+        if self.SHOW_SCREEN:
             self.screen.close()
 
     def save_as_image(self, name):
-        if self.show_screen:
+        if self.SHOW_SCREEN:
             self.screen.save_as_image(name=name)

@@ -463,7 +463,7 @@ class Agent:
             cost = temp_game.change_state(action, stochastic_movement)
             episode_cost += cost
             temp_game.update_player(episode_cost)
-        folder_name = "image"
+        folder_name = "interim_test"
         if not os.path.exists(folder_name):
             os.makedirs(folder_name)
         type = "stochastic" if stochastic_movement else "deterministic"
@@ -480,5 +480,5 @@ if __name__ == "__main__":
         map_id=1,
         stochastic_movement=True,
         num_episode=100,
-        continue_from_last_interim=False,
+        continue_from_last_interim=True,
     )

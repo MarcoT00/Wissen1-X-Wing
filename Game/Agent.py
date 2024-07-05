@@ -260,23 +260,25 @@ class Agent:
                             )
                             turning_row = 7 if map_id == 1 else 10
                             if row >= turning_row:
-                                if (y_speed < 0 and x_speed != 0) or (
-                                    y_speed <= -2 and x_speed == 0
-                                ):
-                                    action = self.game.ACTIONS[5]  # ("H", "V")
-                                elif y_speed == -1 and x_speed == 0:
-                                    action = self.game.ACTIONS[2]  # ("B", "V")
-                                else:
-                                    action = self.game.ACTIONS[3]  # ("H", "B")
+                                action = self.game.ACTIONS[3]
+                                # if (y_speed < 0 and x_speed != 0) or (
+                                #     y_speed <= -2 and x_speed == 0
+                                # ):
+                                #     action = self.game.ACTIONS[5]  # ("H", "V")
+                                # elif y_speed == -1 and x_speed == 0:
+                                #     action = self.game.ACTIONS[2]  # ("B", "V")
+                                # else:
+                                #     action = self.game.ACTIONS[3]  # ("H", "B")
                             else:
-                                if (x_speed < 0 and y_speed != 0) or (
-                                    x_speed <= -2 and y_speed == 0
-                                ):
-                                    action = self.game.ACTIONS[7]  # ("V", "H")
-                                elif x_speed == -1 and y_speed == 0:
-                                    action = self.game.ACTIONS[6]  # ("V", "B")
-                                else:
-                                    action = self.game.ACTIONS[1]  # ("B", "H")
+                                action = self.game.ACTIONS[1]
+                                # if (x_speed < 0 and y_speed != 0) or (
+                                #     x_speed <= -2 and y_speed == 0
+                                # ):
+                                #     action = self.game.ACTIONS[7]  # ("V", "H")
+                                # elif x_speed == -1 and y_speed == 0:
+                                #     action = self.game.ACTIONS[6]  # ("V", "B")
+                                # else:
+                                #     action = self.game.ACTIONS[1]  # ("B", "H")
                             policy[state] = action
                             init_value_function[state] = 0
                             init_g[state] = 0
@@ -320,26 +322,26 @@ class Agent:
         for i in range(len(episode_g)):
             g[visited_states[i]] = episode_g[i]
 
-        if not stochastic_movement:
-            for visited_state in visited_states[:-1]:
-                self.game = Game(
-                    map_id=map_id,
-                    x_pos=visited_state[0],
-                    y_pos=visited_state[1],
-                    x_speed=visited_state[2][0],
-                    y_speed=visited_state[2][1],
-                )
-                selectable_actions = self.game.get_selectable_actions()
-                for action in selectable_actions:
-                    if action == policy[visited_state]:
-                        continue
+        # if not stochastic_movement:
+        #     for visited_state in visited_states[:-1]:
+        #         self.game = Game(
+        #             map_id=map_id,
+        #             x_pos=visited_state[0],
+        #             y_pos=visited_state[1],
+        #             x_speed=visited_state[2][0],
+        #             y_speed=visited_state[2][1],
+        #         )
+        #         selectable_actions = self.game.get_selectable_actions()
+        #         for action in selectable_actions:
+        #             if action == policy[visited_state]:
+        #                 continue
 
-                    self.game.change_state(action)
-                    next_state = self.game.get_state()
-                    self.game.reset_to_original_state()
-                    g[next_state] = self.get_episode_cost(
-                        policy, map_id, next_state, stochastic_movement
-                    )
+        #             self.game.change_state(action)
+        #             next_state = self.game.get_state()
+        #             self.game.reset_to_original_state()
+        #             g[next_state] = self.get_episode_cost(
+        #                 policy, map_id, next_state, stochastic_movement
+        #             )
         # else:
         #     for visited_state in visited_states[:-1]:
         #         self.game = Game(

@@ -133,26 +133,26 @@ class Game:
             match colliding_movement_types[0]:
                 case ("x", 1):
                     return {"x": 0, "y": 1}
-                case ("x", -1):
-                    return {"x": 0, "y": 1}
+                # case ("x", -1):
+                #     return {"x": 0, "y": 1}
                 case ("y", 1):
                     return {"x": 1, "y": 0}
-                case ("y", -1):
-                    return {"x": 1, "y": 0}
-        else:
-            if ("x", 1) in colliding_movement_types:
-                if ("y", 1) in colliding_movement_types:
-                    return {
-                        "x": 1,
-                        "y": 0,
-                    }  # This case will properly not happen in the two given maps
-                elif ("y", -1) in colliding_movement_types:
-                    return {"x": 0, "y": 1}
-            elif ("x", -1) in colliding_movement_types:
-                if ("y", 1) in colliding_movement_types:
-                    return {"x": 1, "y": 0}
-                elif ("y", -1) in colliding_movement_types:
-                    return {"x": 0, "y": 1}
+                # case ("y", -1):
+                #     return {"x": 1, "y": 0}
+        # else:
+        # if ("x", 1) in colliding_movement_types:
+        #     if ("y", 1) in colliding_movement_types:
+        #         return {
+        #             "x": 1,
+        #             "y": 0,
+        #         }  # This case will properly not happen in the two given maps
+        #     elif ("y", -1) in colliding_movement_types:
+        #         return {"x": 0, "y": 1}
+        # elif ("x", -1) in colliding_movement_types:
+        #     if ("y", 1) in colliding_movement_types:
+        #         return {"x": 1, "y": 0}
+        #     elif ("y", -1) in colliding_movement_types:
+        #         return {"x": 0, "y": 1}
 
     def check_escape(self, possible_routes: list):
         for route in possible_routes:
@@ -274,10 +274,11 @@ class Game:
         ):
             y_move = 0
         if x_move != 0 and y_move != 0:
-            if random.random() < 0.5:
-                x_move = 0
-            else:
-                y_move = 0
+            x_move = 0
+            # if random.random() < 0.5:
+            #     x_move = 0
+            # else:
+            #     y_move = 0
         return {
             "x": new_deter_x_pos + x_move,
             "y": new_deter_y_pos - y_move,
@@ -286,35 +287,25 @@ class Game:
     def get_new_velocity(self, action: tuple):
         new_velocity = self.velocity.copy()
 
-        if self.velocity["x"] in range(0, 5):
+        if self.velocity["x"] in range(1, 5):
             match action[0]:
                 case "B":
                     if self.velocity["x"] < 4:
                         new_velocity["x"] += 1
                 case "V":
                     new_velocity["x"] -= 1
-        elif self.velocity["x"] in range(-4, 0):
-            match action[0]:
-                case "B":
-                    if self.velocity["x"] > -4:
-                        new_velocity["x"] -= 1
-                case "V":
-                    self.velocity["x"] += 1
+        elif self.velocity["x"] == 0 and action[0] == "B":
+            new_velocity["x"] += 1
 
-        if self.velocity["y"] in range(0, 5):
+        if self.velocity["y"] in range(1, 5):
             match action[1]:
                 case "B":
                     if self.velocity["y"] < 4:
                         new_velocity["y"] += 1
                 case "V":
                     new_velocity["y"] -= 1
-        elif self.velocity["y"] in range(-4, 0):
-            match action[1]:
-                case "B":
-                    if self.velocity["y"] > -4:
-                        new_velocity["y"] -= 1
-                case "V":
-                    new_velocity["y"] += 1
+        elif self.velocity["y"] == 0 and action[1] == "B":
+            new_velocity["y"] += 1
 
         return new_velocity
 

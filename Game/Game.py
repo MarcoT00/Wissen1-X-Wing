@@ -121,7 +121,7 @@ class Game:
 
     def get_velocity_after_collision(self, possible_movement_sequences: list):
         # Each elem of each sequence is one of the following types:
-        # (x, 1), (x, -1), (y, 1), (y, -1) : Right, Left, Up, Down
+        # (x, 1), (y, 1): Right, Up
         # All sequences have at least one type and at most two types
         # Last elem in a movement sequence is the movement that causes collision
         colliding_movements = []
@@ -133,26 +133,8 @@ class Game:
             match colliding_movement_types[0]:
                 case ("x", 1):
                     return {"x": 0, "y": 1}
-                # case ("x", -1):
-                #     return {"x": 0, "y": 1}
                 case ("y", 1):
                     return {"x": 1, "y": 0}
-                # case ("y", -1):
-                #     return {"x": 1, "y": 0}
-        # else:
-        # if ("x", 1) in colliding_movement_types:
-        #     if ("y", 1) in colliding_movement_types:
-        #         return {
-        #             "x": 1,
-        #             "y": 0,
-        #         }  # This case will properly not happen in the two given maps
-        #     elif ("y", -1) in colliding_movement_types:
-        #         return {"x": 0, "y": 1}
-        # elif ("x", -1) in colliding_movement_types:
-        #     if ("y", 1) in colliding_movement_types:
-        #         return {"x": 1, "y": 0}
-        #     elif ("y", -1) in colliding_movement_types:
-        #         return {"x": 0, "y": 1}
 
     def check_escape(self, possible_routes: list):
         for route in possible_routes:
@@ -274,11 +256,10 @@ class Game:
         ):
             y_move = 0
         if x_move != 0 and y_move != 0:
-            x_move = 0
-            # if random.random() < 0.5:
-            #     x_move = 0
-            # else:
-            #     y_move = 0
+            if random.random() < 0.5:
+                x_move = 0
+            else:
+                y_move = 0
         return {
             "x": new_deter_x_pos + x_move,
             "y": new_deter_y_pos - y_move,

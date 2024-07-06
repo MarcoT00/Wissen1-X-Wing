@@ -33,26 +33,26 @@ class Game:
         self.MAP = Topology.get_map(map_id)
         self.START_POS = {"x": x_pos, "y": y_pos}
         self.START_VELOCITY = {"x": x_speed, "y": y_speed}
+        self.SHOW_SCREEN = show_screen
 
         self.timestep = 0
         self.velocity = self.START_VELOCITY.copy()
         self.pos = self.START_POS.copy()
         self.num_collision = 0
-        self.show_screen = show_screen
-        if self.show_screen:
+        if self.SHOW_SCREEN:
             self.screen = Screen(self.MAP)
 
     def reset_to_original_state(
         self,
     ):
         """
-        Reset the game after each episode
+        Reset the game to original state (when game is initialized)
         """
         self.timestep = 0
         self.velocity = self.START_VELOCITY.copy()
         self.pos = self.START_POS.copy()
         self.num_collision = 0
-        if self.show_screen:
+        if self.SHOW_SCREEN:
             self.screen = Screen(self.MAP)
 
     def change_state(
@@ -123,7 +123,7 @@ class Game:
         # Each elem of each sequence is one of the following types:
         # (x, 1), (x, -1), (y, 1), (y, -1) : Right, Left, Up, Down
         # All sequences have at least one type and at most two types
-        # Last elem is the movement that causes collision
+        # Last elem in a movement sequence is the movement that causes collision
         colliding_movements = []
         for movement_seq in possible_movement_sequences:
             colliding_movements.append(movement_seq[-1])
@@ -140,9 +140,19 @@ class Game:
                 case ("y", -1):
                     return {"x": 1, "y": 0}
         else:
-            first = colliding_movement_types[0]
-            second = colliding_movement_types[1]
-            return {first[0]: -1 * first[1], second[0]: -1 * second[1]}
+            if ("x", 1) in colliding_movement_types:
+                if ("y", 1) in colliding_movement_types:
+                    return {
+                        "x": 1,
+                        "y": 0,
+                    }  # This case will properly not happen in the two given maps
+                elif ("y", -1) in colliding_movement_types:
+                    return {"x": 0, "y": 1}
+            elif ("x", -1) in colliding_movement_types:
+                if ("y", 1) in colliding_movement_types:
+                    return {"x": 1, "y": 0}
+                elif ("y", -1) in colliding_movement_types:
+                    return {"x": 0, "y": 1}
 
     def check_escape(self, possible_routes: list):
         for route in possible_routes:
@@ -218,46 +228,60 @@ class Game:
         stochastic_movement,
         require_stochastic_next_state,
     ):
-        if not stochastic_movement:
-            if escape_is_possible:
-                return escape_pos
-            else:
-                return {
-                    "x": self.pos["x"] + velocity["x"],
-                    "y": self.pos["y"] - velocity["y"],
-                }
+        if escape_is_possible:
+            return escape_pos
         else:
-            if require_stochastic_next_state:
-                x_move, y_move = self.get_stochastic_movements(velocity)
+            new_deter_x_pos = self.pos["x"] + velocity["x"]
+            new_deter_y_pos = self.pos["y"] - velocity["y"]
+            if not stochastic_movement:  # deterministic movement
                 return {
-                    "x": self.pos["x"] + x_move,
-                    "y": self.pos["y"] - y_move,
+                    "x": new_deter_x_pos,
+                    "y": new_deter_y_pos,
                 }
             else:
-                if random.random() < 0.5:
-                    x_move, y_move = self.get_stochastic_movements(velocity)
-                    return {
-                        "x": self.pos["x"] + x_move,
-                        "y": self.pos["y"] - y_move,
-                    }
-                else:
-                    if escape_is_possible:
-                        return escape_pos
-                    else:
+                if not require_stochastic_next_state:
+                    if random.random() < 0.5:
                         return {
-                            "x": self.pos["x"] + velocity["x"],
-                            "y": self.pos["y"] - velocity["y"],
+                            "x": new_deter_x_pos,
+                            "y": new_deter_y_pos,
                         }
+                    else:
+                        return self.get_stochastic_next_pos(
+                            velocity, new_deter_x_pos, new_deter_y_pos
+                        )
+                else:
+                    return self.get_stochastic_next_pos(
+                        velocity, new_deter_x_pos, new_deter_y_pos
+                    )
 
-    def get_stochastic_movements(self, velocity):
-        x_move = int(velocity["x"] / abs(velocity["x"])) if velocity["x"] != 0 else 0
-        y_move = int(velocity["y"] / abs(velocity["y"])) if velocity["y"] != 0 else 0
+    def get_stochastic_next_pos(self, velocity, new_deter_x_pos, new_deter_y_pos):
+        x_move = (
+            int(velocity["x"] / abs(velocity["x"])) if velocity["x"] != 0 else 0
+        )  # Either -1, 0, or 1
+        y_move = (
+            int(velocity["y"] / abs(velocity["y"])) if velocity["y"] != 0 else 0
+        )  # Either -1, 0, or 1
+        if (
+            (new_deter_x_pos + x_move) >= len(self.MAP[0])
+            or (new_deter_x_pos + x_move) < 0
+            or self.MAP[new_deter_y_pos][new_deter_x_pos + x_move] == "R"
+        ):
+            x_move = 0
+        if (
+            (new_deter_y_pos - y_move) >= len(self.MAP)
+            or (new_deter_y_pos - y_move) < 0
+            or self.MAP[new_deter_y_pos - y_move][new_deter_x_pos] == "R"
+        ):
+            y_move = 0
         if x_move != 0 and y_move != 0:
-            if self.MAP[self.pos["y"]][self.pos["x"] + x_move] == "R":
+            if random.random() < 0.5:
                 x_move = 0
             else:
                 y_move = 0
-        return x_move, y_move
+        return {
+            "x": new_deter_x_pos + x_move,
+            "y": new_deter_y_pos - y_move,
+        }
 
     def get_new_velocity(self, action: tuple):
         new_velocity = self.velocity.copy()
@@ -297,7 +321,12 @@ class Game:
     def get_selectable_actions(self):
         if self.is_finished():
             return []
-        elif self.pos["x"] == 0 and self.pos["y"] == 0:
+        elif (
+            self.pos["x"] == 0
+            and self.pos["y"] == 0
+            and self.velocity["x"] == 0
+            and self.velocity["y"] == 0
+        ):
             return self.ACTIONS
         else:
             velocity_prediction = {}
@@ -317,9 +346,17 @@ class Game:
         return self.MAP[self.pos["y"]][self.pos["x"]] == "Z"
 
     def update_screen(self):
-        if self.show_screen:
+        if self.SHOW_SCREEN:
             self.screen.show_map()
 
     def update_player(self, cost):
-        if self.show_screen:
+        if self.SHOW_SCREEN:
             self.screen.show_player(self.pos, cost)
+
+    def close_window(self):
+        if self.SHOW_SCREEN:
+            self.screen.close()
+
+    def save_as_image(self, name):
+        if self.SHOW_SCREEN:
+            self.screen.save_as_image(name=name)

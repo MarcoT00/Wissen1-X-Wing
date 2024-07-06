@@ -11,10 +11,12 @@ class Simulate:
     policy = None
 
     def __init__(
-        self, map_id=1, start_pos_index=0, num_flight=100, type="deterministic"
+        self, map_id, start_pos_index, num_flight, type, folder_name, iteration
     ):
         self.num_collision = 0
-        self.policy = self.read_policy_json_input(type, map_id, start_pos_index)
+        self.policy = self.read_saved_policy(
+            type, map_id, start_pos_index, folder_name, iteration
+        )
 
         # n_start = len(Topology.start_positions_map_1)
         start_pos = Topology.get_start_pos(map_id, start_pos_index)
@@ -57,11 +59,16 @@ class Simulate:
         time.sleep(15)
         return flight_cost
 
-    def read_policy_json_input(self, type, map_id, start_pos_index):
-        folder_name = "optimal_policies"
-        file_path = os.path.join(
-            folder_name, f"{type}_map{map_id}_index{start_pos_index}.json"
-        )
+    def read_saved_policy(self, type, map_id, start_pos_index, folder_name, iteration):
+        if iteration is None:
+            file_path = os.path.join(
+                folder_name, f"{type}_map{map_id}_index{start_pos_index}.json"
+            )
+        else:
+            file_path = os.path.join(
+                folder_name,
+                f"{type}_map{map_id}_index{start_pos_index}_ite{iteration}.json",
+            )
         with open(file_path) as f:
             policy_input = json.load(f)
         policy = {}
@@ -71,4 +78,11 @@ class Simulate:
         return policy
 
 
-s = Simulate(map_id=2, start_pos_index=10, num_flight=1, type="deterministic")
+s = Simulate(
+    map_id=1,
+    start_pos_index=0,
+    num_flight=1,
+    type="deterministic",
+    folder_name="optimal_policies",
+    iteration=None,
+)

@@ -292,7 +292,7 @@ class Agent:
         value_function = init_value_function.copy()
         while t <= num_episode:
             g = init_g.copy()
-            self.update_g(policy, g, map_id, stochastic_movement)
+            self.update_g(policy, g, stochastic_movement)
             self.update_value_function(g, value_function, learn_rate=1 / t)
             self.game = Game(
                 map_id=map_id,
@@ -304,7 +304,7 @@ class Agent:
             t += 1
         return value_function
 
-    def update_g(self, policy, g, map_id, stochastic_movement):
+    def update_g(self, policy, g, stochastic_movement):
         transition_costs = []
         visited_states = [self.game.get_state()]
         while not self.game.is_finished():

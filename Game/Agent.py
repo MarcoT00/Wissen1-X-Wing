@@ -158,6 +158,44 @@ class Agent:
 
         return policy
 
+    def initialize(self, map_id, start_pos_index):
+        # state: (x, y, (x_speed, y_speed))
+        # velocity range in both directions: [-4,+4]
+        # MAP[y][x] must be one of S,X,Z
+        # default action is always accelerate up
+        start_pos = Topology.get_start_pos(map_id, start_pos_index)
+        self.game = Game(
+            map_id=map_id,
+            x_pos=start_pos["x"],
+            y_pos=start_pos["y"],
+            x_speed=0,
+            y_speed=0,
+        )
+        policy = {}
+        init_value_function = {}
+        init_g = {}
+        self.X_SIZE = len(self.game.MAP[0])
+        self.Y_SIZE = len(self.game.MAP)
+        for row in range(self.Y_SIZE):
+            for col in range(self.X_SIZE):
+                if self.game.MAP[row][col] in ["S", "X", "Z"]:
+                    for x_speed in range(0, 5):
+                        for y_speed in range(0, 5):
+                            state = (
+                                col,  # x
+                                row,  # y
+                                (x_speed, y_speed),  # velocity
+                            )
+                            turning_row = 7 if map_id == 1 else 10
+                            if row >= turning_row:
+                                action = self.game.ACTIONS[3]  # ("H", "B")
+                            else:
+                                action = self.game.ACTIONS[1]  # ("B", "H")
+                            policy[state] = action
+                            init_value_function[state] = 0
+                            init_g[state] = 0
+        return policy, init_value_function, init_g, start_pos
+
     def read_last_interim_policy(
         self, map_id, start_pos_index, stochastic_movement, interim_folder_name
     ):
@@ -210,61 +248,35 @@ class Agent:
         with open(file_path, "w") as f:
             json.dump(stringified_policy, f, indent=4)
 
-    def get_expected_flight_cost(
-        self, policy, map_id, start_pos, num_episode, stochastic_movement
+    def save_visual(
+        self, policy, map_id, iteration, stochastic_movement, start_pos_index
     ):
-        expected_flight_cost = 0
-        t = 1
-        while t <= num_episode:
-            episode_cost = self.get_episode_cost(
-                policy,
-                map_id,
-                (start_pos["x"], start_pos["y"], (0, 0)),
-                stochastic_movement,
-            )
-            expected_flight_cost = expected_flight_cost + (1 / t) * (
-                episode_cost - expected_flight_cost
-            )
-            t += 1
-        return expected_flight_cost
-
-    def initialize(self, map_id, start_pos_index):
-        # state: (x, y, (x_speed, y_speed))
-        # velocity range in both directions: [-4,+4]
-        # MAP[y][x] must be one of S,X,Z
-        # default action is always accelerate up
+        episode_cost = 0
         start_pos = Topology.get_start_pos(map_id, start_pos_index)
-        self.game = Game(
+        temp_game = Game(
             map_id=map_id,
             x_pos=start_pos["x"],
             y_pos=start_pos["y"],
             x_speed=0,
             y_speed=0,
+            show_screen=True,
         )
-        policy = {}
-        init_value_function = {}
-        init_g = {}
-        self.X_SIZE = len(self.game.MAP[0])
-        self.Y_SIZE = len(self.game.MAP)
-        for row in range(self.Y_SIZE):
-            for col in range(self.X_SIZE):
-                if self.game.MAP[row][col] in ["S", "X", "Z"]:
-                    for x_speed in range(0, 5):
-                        for y_speed in range(0, 5):
-                            state = (
-                                col,  # x
-                                row,  # y
-                                (x_speed, y_speed),  # velocity
-                            )
-                            turning_row = 7 if map_id == 1 else 10
-                            if row >= turning_row:
-                                action = self.game.ACTIONS[3]  # ("H", "B")
-                            else:
-                                action = self.game.ACTIONS[1]  # ("B", "H")
-                            policy[state] = action
-                            init_value_function[state] = 0
-                            init_g[state] = 0
-        return policy, init_value_function, init_g, start_pos
+        temp_game.update_screen()
+        temp_game.update_player(episode_cost)
+        while not temp_game.is_finished():
+            action = policy[temp_game.get_state()]
+            cost = temp_game.change_state(action, stochastic_movement)
+            episode_cost += cost
+            temp_game.update_player(episode_cost)
+        folder_name = "interim_test"
+        if not os.path.exists(folder_name):
+            os.makedirs(folder_name)
+        type = "stochastic" if stochastic_movement else "deterministic"
+        img_file_name = os.path.join(
+            folder_name, f"{type}_map{map_id}_index{start_pos_index}_ite{iteration}.jpg"
+        )
+        temp_game.save_as_image(name=img_file_name)
+        temp_game.close_window()
 
     def evaluate_policy(
         self,
@@ -375,35 +387,23 @@ class Agent:
             greedy_policy[state] = best_action
         return greedy_policy
 
-    def save_visual(
-        self, policy, map_id, iteration, stochastic_movement, start_pos_index
+    def get_expected_flight_cost(
+        self, policy, map_id, start_pos, num_episode, stochastic_movement
     ):
-        episode_cost = 0
-        start_pos = Topology.get_start_pos(map_id, start_pos_index)
-        temp_game = Game(
-            map_id=map_id,
-            x_pos=start_pos["x"],
-            y_pos=start_pos["y"],
-            x_speed=0,
-            y_speed=0,
-            show_screen=True,
-        )
-        temp_game.update_screen()
-        temp_game.update_player(episode_cost)
-        while not temp_game.is_finished():
-            action = policy[temp_game.get_state()]
-            cost = temp_game.change_state(action, stochastic_movement)
-            episode_cost += cost
-            temp_game.update_player(episode_cost)
-        folder_name = "interim_test"
-        if not os.path.exists(folder_name):
-            os.makedirs(folder_name)
-        type = "stochastic" if stochastic_movement else "deterministic"
-        img_file_name = os.path.join(
-            folder_name, f"{type}_map{map_id}_index{start_pos_index}_ite{iteration}.jpg"
-        )
-        temp_game.save_as_image(name=img_file_name)
-        temp_game.close_window()
+        expected_flight_cost = 0
+        t = 1
+        while t <= num_episode:
+            episode_cost = self.get_episode_cost(
+                policy,
+                map_id,
+                (start_pos["x"], start_pos["y"], (0, 0)),
+                stochastic_movement,
+            )
+            expected_flight_cost = expected_flight_cost + (1 / t) * (
+                episode_cost - expected_flight_cost
+            )
+            t += 1
+        return expected_flight_cost
 
 
 if __name__ == "__main__":

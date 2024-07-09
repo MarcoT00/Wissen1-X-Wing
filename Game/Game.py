@@ -1,7 +1,7 @@
 from Topology import Topology
 from Screen import Screen
-import itertools
 import random
+import numpy as np
 
 
 class Game:
@@ -68,13 +68,11 @@ class Game:
         new_velocity = self.get_new_velocity(selected_action)
 
         # Get possible routes and movement sequences when moving with the new velocity
-        possible_routes, possible_movement_sequences = (
-            self.get_possible_routes_and_movement_sequences(
-                current_pos=self.pos, velocity=new_velocity
-            )
+        possible_route, possible_mvmt_seq = self.get_possible_route_and_mvmt_seq(
+            current_pos=self.pos, velocity=new_velocity
         )
 
-        escape_is_possible, escape_pos = self.check_escape(possible_routes)
+        escape_is_possible, escape_pos = self.check_escape(possible_route)
         if escape_is_possible:
             self.velocity = new_velocity
             self.pos = self.get_new_pos(
@@ -85,17 +83,10 @@ class Game:
                 require_stochastic_next_state=require_stochastic_next_state,
             )
             cost = 1
-        elif self.collision_is_certain(possible_routes):
-            while self.collision_is_certain(possible_routes):
-                velocity_after_collision = self.get_velocity_after_collision(
-                    possible_movement_sequences
-                )
-                possible_routes, possible_movement_sequences = (
-                    self.get_possible_routes_and_movement_sequences(
-                        current_pos=self.pos,
-                        velocity=velocity_after_collision,
-                    )
-                )
+        elif self.collision_is_certain(possible_route):
+            velocity_after_collision = self.get_velocity_after_collision(
+                possible_mvmt_seq
+            )
             self.velocity = velocity_after_collision
             self.pos = self.get_new_pos(
                 velocity=velocity_after_collision,
@@ -119,88 +110,95 @@ class Game:
 
         return cost
 
-    def get_velocity_after_collision(self, possible_movement_sequences: list):
+    def get_velocity_after_collision(self, possible_mvmt_seq: list):
         # Each elem of each sequence is one of the following types:
         # (x, 1), (y, 1): Right, Up
         # All sequences have at least one type and at most two types
         # Last elem in a movement sequence is the movement that causes collision
-        colliding_movements = []
-        for movement_seq in possible_movement_sequences:
-            colliding_movements.append(movement_seq[-1])
-        colliding_movement_types = list(set(colliding_movements))
+        match possible_mvmt_seq[-1]:
+            case ("x", 1):
+                return {"x": 0, "y": 1}
+            case ("y", 1):
+                return {"x": 1, "y": 0}
 
-        if len(colliding_movement_types) == 1:
-            match colliding_movement_types[0]:
-                case ("x", 1):
-                    return {"x": 0, "y": 1}
-                case ("y", 1):
-                    return {"x": 1, "y": 0}
+    def check_escape(self, possible_route: list):
+        if possible_route[-1][1] == "Z":
+            return True, possible_route[-1][0]
+        else:
+            return False, None
 
-    def check_escape(self, possible_routes: list):
-        for route in possible_routes:
-            if route[-1][1] == "Z":
-                return True, route[-1][0]
-        return False, None
+    def collision_is_certain(self, possible_route: list):
+        return possible_route[-1][1] == "R"
 
-    def collision_is_certain(self, possible_routes: list):
-        for route in possible_routes:
-            if route[-1][1] != "R":
-                return False
-        return True
-
-    def get_possible_routes_and_movement_sequences(self, current_pos, velocity):
+    def get_possible_route_and_mvmt_seq(self, current_pos, velocity):
         """
         Route: sequence of cells until no movement left or the agent has reached R or Z
         """
 
         # Get possible movement sequences
-        num_x_moves = abs(velocity["x"])
-        num_y_moves = abs(velocity["y"])
-        x_move = (
-            ("x", int(velocity["x"] / num_x_moves)) if num_x_moves != 0 else ("x", 0)
-        )
-        y_move = (
-            ("y", int(velocity["y"] / num_y_moves)) if num_y_moves != 0 else ("y", 0)
-        )
-        movement_list = [x_move] * num_x_moves + [y_move] * num_y_moves
-        unique_permutations = set(itertools.permutations(movement_list))
-        available_movement_sequences = [
-            list(permutation) for permutation in unique_permutations
-        ]
+        if velocity["x"] == 0 or velocity["y"] == 0:
+            num_x_moves = abs(velocity["x"])
+            num_y_moves = abs(velocity["y"])
+            x_move = (
+                ("x", int(velocity["x"] / num_x_moves))
+                if num_x_moves != 0
+                else ("x", 0)
+            )
+            y_move = (
+                ("y", int(velocity["y"] / num_y_moves))
+                if num_y_moves != 0
+                else ("y", 0)
+            )
+            movement_seq = [x_move] * num_x_moves + [y_move] * num_y_moves
+        else:
+            x_flight_pos = list(np.arange(0, velocity["x"] + 0.1, 0.1))
+            y_flight_pos = [x * velocity["y"] / velocity["x"] for x in x_flight_pos]
+            x_displacements = [round(x) for x in x_flight_pos]
+            y_displacements = [round(y) for y in y_flight_pos]
+            displacements = list(zip(x_displacements, y_displacements))
+            dedup_displacements = []
+            for d in displacements:
+                if d not in dedup_displacements:
+                    dedup_displacements.append(d)
+            displacements = dedup_displacements.copy()
+            movement_seq = []
+            previous_pair = displacements[0]
+            for pair in displacements[1:]:
+                pair_diff = (pair[0] - previous_pair[0], pair[1] - previous_pair[1])
+                if pair_diff[0] == 1 and pair_diff[1] == 1:
+                    movement_seq.append(("y", 1))
+                    movement_seq.append(("x", 1))
+                elif pair_diff[0] == 1 and pair_diff[1] == 0:
+                    movement_seq.append(("x", 1))
+                elif pair_diff[1] == 1 and pair_diff[0] == 0:
+                    movement_seq.append(("y", 1))
+                previous_pair = pair
 
         # From possible movement sequences, extract the possible routes
         # For each movement sequence, stop extracting when reaching R or Z
-        possible_movement_sequences = []
-        possible_routes = []
+        possible_route = [
+            (
+                current_pos,
+                self.MAP[current_pos["y"]][current_pos["x"]],
+            )
+        ]
+        possible_mvmt_seq = []
+        for movement in movement_seq:
+            next_pos = {
+                "x": possible_route[-1][0]["x"],
+                "y": possible_route[-1][0]["y"],
+            }
+            if movement[0] == "x":
+                next_pos[movement[0]] = next_pos[movement[0]] + movement[1]
+            else:
+                next_pos[movement[0]] = next_pos[movement[0]] - movement[1]
+            next_pos_type = self.MAP[next_pos["y"]][next_pos["x"]]
+            possible_route.append((next_pos, next_pos_type))
+            possible_mvmt_seq.append(movement)
+            if next_pos_type in ["R", "Z"]:
+                break
 
-        for movement_seq in available_movement_sequences:
-            route = [
-                (
-                    current_pos,
-                    self.MAP[current_pos["y"]][current_pos["x"]],
-                )
-            ]
-            possible_movement_seq = []
-
-            for movement in movement_seq:
-                next_pos = {
-                    "x": route[-1][0]["x"],
-                    "y": route[-1][0]["y"],
-                }
-                if movement[0] == "x":
-                    next_pos[movement[0]] = next_pos[movement[0]] + movement[1]
-                else:
-                    next_pos[movement[0]] = next_pos[movement[0]] - movement[1]
-                next_pos_type = self.MAP[next_pos["y"]][next_pos["x"]]
-                route.append((next_pos, next_pos_type))
-                possible_movement_seq.append(movement)
-                if next_pos_type in ["R", "Z"]:
-                    break
-
-            possible_routes.append(route)
-            possible_movement_sequences.append(possible_movement_seq)
-
-        return possible_routes, possible_movement_sequences
+        return possible_route, possible_mvmt_seq
 
     def get_new_pos(
         self,

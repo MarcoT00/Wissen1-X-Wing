@@ -11,9 +11,16 @@ class Simulate:
     policy = None
 
     def __init__(
-        self, map_id, start_pos_index, num_flight, type, folder_name, iteration
+        self,
+        map_id,
+        start_pos_index,
+        num_flight,
+        stochastic_movement,
+        folder_name,
+        iteration,
     ):
         self.num_collision = 0
+        type = "stochastic" if stochastic_movement else "deterministic"
         self.policy = self.read_saved_policy(
             type, map_id, start_pos_index, folder_name, iteration
         )
@@ -30,7 +37,7 @@ class Simulate:
         )
         flight_costs = {}
         for i in range(1, 1 + num_flight):
-            flight_costs[i] = self.execute_simulation(game)
+            flight_costs[i] = self.execute_simulation(game, stochastic_movement)
             print(
                 f"{i}-th flight, number of actions leading to collision: {game.num_collision}"
             )
@@ -44,19 +51,21 @@ class Simulate:
         min_cost_flights = [
             flight_id for flight_id, cost in flight_costs.items() if cost == min_cost
         ]
-        print(f"Flight(s) with minimal cost: {min_cost_flights}; Cost: {min_cost}")
+        print(
+            f"Number of flights with minimal cost: {len(min_cost_flights)}; Cost: {min_cost}"
+        )
 
-    def execute_simulation(self, game: Game):
+    def execute_simulation(self, game: Game, stochastic_movement):
         flight_cost = 0
         game.update_screen()
         game.update_player(flight_cost)
         while not game.is_finished():
             action = self.policy[game.get_state()]
-            cost = game.change_state(action)
+            cost = game.change_state(action, stochastic_movement)
             flight_cost += cost
             game.update_player(flight_cost)
-            time.sleep(1)
-        time.sleep(15)
+            # time.sleep(1)
+        # time.sleep(15)
         return flight_cost
 
     def read_saved_policy(self, type, map_id, start_pos_index, folder_name, iteration):
@@ -79,10 +88,10 @@ class Simulate:
 
 
 s = Simulate(
-    map_id=1,
+    map_id=2,
     start_pos_index=0,
-    num_flight=1,
-    type="deterministic",
+    num_flight=100,
+    stochastic_movement=True,  # stochastic OR deterministic
     folder_name="optimal_policies",
     iteration=None,
 )

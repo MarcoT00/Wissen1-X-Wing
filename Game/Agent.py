@@ -304,58 +304,6 @@ class Agent:
         for i in range(len(episode_g)):
             g[visited_states[i]] = episode_g[i]
 
-        if not stochastic_movement:
-            for visited_state in visited_states[:-1]:
-                self.game = Game(
-                    map_id=map_id,
-                    x_pos=visited_state[0],
-                    y_pos=visited_state[1],
-                    x_speed=visited_state[2][0],
-                    y_speed=visited_state[2][1],
-                )
-                selectable_actions = self.game.get_selectable_actions()
-                for action in selectable_actions:
-                    if action == policy[visited_state]:
-                        continue
-
-                    self.game.change_state(action)
-                    next_state = self.game.get_state()
-                    self.game.reset_to_original_state()
-                    g[next_state] = self.get_episode_cost(
-                        policy, map_id, next_state, stochastic_movement
-                    )
-        else:
-            for visited_state in visited_states[:-1]:
-                self.game = Game(
-                    map_id=map_id,
-                    x_pos=visited_state[0],
-                    y_pos=visited_state[1],
-                    x_speed=visited_state[2][0],
-                    y_speed=visited_state[2][1],
-                )
-                selectable_actions = self.game.get_selectable_actions()
-                for action in selectable_actions:
-                    if action == policy[visited_state]:
-                        continue
-
-                    self.game.change_state(action)
-                    deterministic_next_state = self.game.get_state()
-                    self.game.reset_to_original_state()
-                    g[deterministic_next_state] = self.get_episode_cost(
-                        policy, map_id, deterministic_next_state, stochastic_movement
-                    )
-
-                    self.game.change_state(
-                        action,
-                        stochastic_movement=True,
-                        require_stochastic_next_state=True,
-                    )
-                    stochastic_next_state = self.game.get_state()
-                    self.game.reset_to_original_state()
-                    g[stochastic_next_state] = self.get_episode_cost(
-                        policy, map_id, stochastic_next_state, stochastic_movement
-                    )
-
     def get_episode_cost(self, policy, map_id, start_state, stochastic_movement):
         temp_game = Game(
             map_id=map_id,
@@ -462,7 +410,7 @@ if __name__ == "__main__":
     Agent(
         start_pos_index=0,
         map_id=1,
-        stochastic_movement=True,
-        num_episode=100,
+        stochastic_movement=False,
+        num_episode=1,
         continue_from_last_interim=False,
     )

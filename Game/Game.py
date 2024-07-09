@@ -239,10 +239,10 @@ class Game:
     def get_stochastic_next_pos(self, velocity, new_deter_x_pos, new_deter_y_pos):
         x_move = (
             int(velocity["x"] / abs(velocity["x"])) if velocity["x"] != 0 else 0
-        )  # Either -1, 0, or 1
+        )  # Either 0 or 1
         y_move = (
             int(velocity["y"] / abs(velocity["y"])) if velocity["y"] != 0 else 0
-        )  # Either -1, 0, or 1
+        )  # Either 0 or 1
         if (
             (new_deter_x_pos + x_move) >= len(self.MAP[0])
             or (new_deter_x_pos + x_move) < 0
@@ -294,8 +294,7 @@ class Game:
         if self.is_finished():
             return []
         elif (
-            self.pos["x"] == 0
-            and self.pos["y"] == 0
+            self.MAP[self.pos["y"]][self.pos["x"]] == "S"
             and self.velocity["x"] == 0
             and self.velocity["y"] == 0
         ):

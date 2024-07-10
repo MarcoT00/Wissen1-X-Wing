@@ -149,7 +149,7 @@ class Agent:
                 min_streak = 1
             else:
                 min_streak += 1
-                if min_streak > 100:
+                if min_streak > 500:
                     optimal_policy_found = True
             print(f"|\tMin expected cost thus far: {min_expected_cost}")
 
@@ -202,12 +202,7 @@ class Agent:
                                 row,  # y
                                 (x_speed, y_speed),  # velocity
                             )
-                            turning_row = 14 if map_id == 1 else 17
-                            if row >= turning_row:
-                                action = ("H", "B")
-                            else:
-                                action = ("B", "V")
-                            policy[state] = action
+                            policy[state] = ("H", "B")
                             init_value_function[state] = 0
                             init_g[state] = 0
         return policy, init_value_function, init_g, start_pos
@@ -425,10 +420,11 @@ class Agent:
 
 
 if __name__ == "__main__":
-    Agent(
-        start_pos_index=0,
-        map_id=2,
-        stochastic_movement=True,
-        num_episode=100,
-        continue_from_last_interim=False,
-    )
+    for s in range(0, 6):
+        Agent(
+            start_pos_index=s,
+            map_id=1,
+            stochastic_movement=False,
+            num_episode=1,
+            continue_from_last_interim=False,
+        )

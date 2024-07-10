@@ -35,7 +35,7 @@ class Simulate:
             y_pos=start_pos["y"],
             x_speed=0,
             y_speed=0,
-            # show_screen=True,
+            show_screen=True,
         )
         flight_costs = {}
         for i in range(1, 1 + num_flight):
@@ -61,8 +61,8 @@ class Simulate:
             cost = game.change_state(action, stochastic_movement)
             flight_cost += cost
             game.update_player(flight_cost)
-            # time.sleep(1)
-        # time.sleep(10)
+            time.sleep(1)
+        time.sleep(10)
         return flight_cost
 
     def read_saved_policy(self, type, map_id, start_pos_index, folder_name, iteration):
@@ -85,10 +85,10 @@ class Simulate:
 
 
 s = Simulate(
-    map_id=2,
+    map_id=1,
     start_pos_index=0,
-    num_flight=100,
-    stochastic_movement=False,  # stochastic OR deterministic
+    num_flight=1,
+    stochastic_movement=False,
     folder_name="optimal_policies",
     iteration=None,
 )

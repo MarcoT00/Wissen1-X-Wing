@@ -1,4 +1,4 @@
-from Game import Game
+from GameV2 import Game
 from Topology import Topology
 
 start_pos_index=0

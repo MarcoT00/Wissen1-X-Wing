@@ -202,7 +202,12 @@ class Agent:
                                 row,  # y
                                 (x_speed, y_speed),  # velocity
                             )
-                            policy[state] = ("H", "B")
+                            turning_row = 8 if map_id == 1 else 14
+                            if row >= turning_row:
+                                action = ("H", "B")
+                            else:
+                                action = ("B", "V")
+                            policy[state] = action
                             init_value_function[state] = 0
                             init_g[state] = 0
         return policy, init_value_function, init_g, start_pos
@@ -392,9 +397,7 @@ class Agent:
                 if policy[state] in actions_with_min_cost:
                     best_action = policy[state]
                 else:
-                    best_action = actions_with_min_cost[
-                        random.randint(0, len(actions_with_min_cost) - 1)
-                    ]
+                    best_action = random.choice(actions_with_min_cost)
             else:
                 best_action = policy[state]
             greedy_policy[state] = best_action
@@ -424,7 +427,7 @@ if __name__ == "__main__":
         Agent(
             start_pos_index=s,
             map_id=1,
-            stochastic_movement=False,
-            num_episode=1,
+            stochastic_movement=True,
+            num_episode=100,
             continue_from_last_interim=False,
         )

@@ -4,6 +4,7 @@ import json
 from itertools import accumulate
 import os
 import ast
+import random
 
 
 class Agent:
@@ -58,30 +59,40 @@ class Agent:
             map_id, start_pos_index
         )
 
-        interim_folder_name = "interim_policies"
         if continue_from_last_interim:
             policy, iteration = self.read_last_interim_policy(
-                map_id, start_pos_index, stochastic_movement, interim_folder_name
-            )
-        else:
-            self.save_policy(
                 map_id,
                 start_pos_index,
                 stochastic_movement,
-                policy,
-                interim_folder_name,
-                iteration=0,
+                interim_folder_name="interim_policies",
             )
-            self.save_visual(
-                policy=policy,
-                map_id=map_id,
-                iteration=0,
-                stochastic_movement=stochastic_movement,
-                start_pos_index=start_pos_index,
-            )
+        else:
+            # self.save_policy(
+            #     map_id,
+            #     start_pos_index,
+            #     stochastic_movement,
+            #     policy,
+            #     interim_folder_name,
+            #     iteration=0,
+            # )
+            # self.save_visual(
+            #     policy=policy,
+            #     map_id=map_id,
+            #     iteration=0,
+            #     stochastic_movement=stochastic_movement,
+            #     start_pos_index=start_pos_index,
+            # )
             iteration = 1
 
+        init_flight_cost = self.get_expected_flight_cost(
+            policy, map_id, start_pos, num_episode, stochastic_movement
+        )
+        print(f"|\tExpected flight cost with initial policy: {init_flight_cost}")
+
         optimal_policy_found = False
+        min_expected_cost = init_flight_cost
+        min_streak = 1
+        optimal_policy = policy.copy()
         while not optimal_policy_found:
             print(f"|---Iteration {iteration}:")
 
@@ -121,42 +132,47 @@ class Agent:
             for state, action in policy.items():
                 if action != previous_policy[state]:
                     changes[state] = action
-            if len(changes) == 0:
-                optimal_policy_found = True
             print(f"|\t{len(changes)} changes from the previous policy")
 
-            # Calculate expected flight cost with previous and new policies
-            previous_flight_cost = self.get_expected_flight_cost(
-                previous_policy, map_id, start_pos, num_episode, stochastic_movement
-            )
-            print(
-                f"|\tExpected flight cost with previous policy: {previous_flight_cost}"
-            )
+            # Calculate expected flight cost with new policy
             new_flight_cost = self.get_expected_flight_cost(
                 policy, map_id, start_pos, num_episode, stochastic_movement
             )
             print(f"|\tExpected flight cost with new policy: {new_flight_cost}")
 
+            if len(changes) == 0:
+                optimal_policy_found = True
+                optimal_policy = policy.copy()
+            elif new_flight_cost < min_expected_cost:
+                min_expected_cost = new_flight_cost
+                optimal_policy = policy.copy()
+                min_streak = 1
+            else:
+                min_streak += 1
+                if min_streak > 500:
+                    optimal_policy_found = True
+            print(f"|\tMin expected cost thus far: {min_expected_cost}")
+
             # Save interim results
-            self.save_policy(
-                map_id,
-                start_pos_index,
-                stochastic_movement,
-                policy,
-                interim_folder_name,
-                iteration=iteration,
-            )
-            self.save_visual(
-                policy=policy,
-                map_id=map_id,
-                iteration=iteration,
-                stochastic_movement=stochastic_movement,
-                start_pos_index=start_pos_index,
-            )
+            # self.save_policy(
+            #     map_id,
+            #     start_pos_index,
+            #     stochastic_movement,
+            #     policy,
+            #     interim_folder_name,
+            #     iteration=iteration,
+            # )
+            # self.save_visual(
+            #     policy=policy,
+            #     map_id=map_id,
+            #     iteration=iteration,
+            #     stochastic_movement=stochastic_movement,
+            #     start_pos_index=start_pos_index,
+            # )
 
             iteration += 1
 
-        return policy
+        return optimal_policy
 
     def initialize(self, map_id, start_pos_index):
         # state: (x, y, (x_speed, y_speed))
@@ -186,11 +202,11 @@ class Agent:
                                 row,  # y
                                 (x_speed, y_speed),  # velocity
                             )
-                            turning_row = 7 if map_id == 1 else 10
+                            turning_row = 8 if map_id == 1 else 14
                             if row >= turning_row:
-                                action = self.game.ACTIONS[3]  # ("H", "B")
+                                action = ("H", "B")
                             else:
-                                action = self.game.ACTIONS[1]  # ("B", "H")
+                                action = ("B", "V")
                             policy[state] = action
                             init_value_function[state] = 0
                             init_g[state] = 0
@@ -381,7 +397,7 @@ class Agent:
                 if policy[state] in actions_with_min_cost:
                     best_action = policy[state]
                 else:
-                    best_action = actions_with_min_cost[0]
+                    best_action = random.choice(actions_with_min_cost)
             else:
                 best_action = policy[state]
             greedy_policy[state] = best_action
@@ -407,10 +423,11 @@ class Agent:
 
 
 if __name__ == "__main__":
-    Agent(
-        start_pos_index=0,
-        map_id=1,
-        stochastic_movement=False,
-        num_episode=1,
-        continue_from_last_interim=False,
-    )
+    for s in range(0, 6):
+        Agent(
+            start_pos_index=s,
+            map_id=1,
+            stochastic_movement=True,
+            num_episode=100,
+            continue_from_last_interim=False,
+        )

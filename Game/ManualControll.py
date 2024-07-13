@@ -9,7 +9,7 @@ game = Game(map_id=MAP_ID, x_pos=start_pos["x"], y_pos=start_pos["y"], x_speed=0
 print("To controll the X-Wing press W,A,S,D")
 game.update_screen()
 
-while True:
+while not game.is_finished():
     print(f"Speed: {game.velocity}")
     print(f"Pos: {game.pos}")
     key = input()
@@ -26,5 +26,5 @@ while True:
         case _:
             action = game.ACTIONS[4]
     print(action)
-    cost = game.change_state(action)
+    cost = game.change_state(action, stochastic_movement=True)
     game.update_player(cost=cost)

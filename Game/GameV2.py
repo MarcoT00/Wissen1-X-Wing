@@ -60,18 +60,20 @@ class Game:
         self,
         selected_action: tuple,
         stochastic_movement=False,
-        require_stochastic_next_state=False,
     ):
         self.timestep += 1
-        cost = 0
         self.velocity = self.get_new_velocity(selected_action)
-        new_position = self.get_new_position(self.pos.copy(), self.velocity) # check for out of bounds!
-        print("New Position:", new_position)
-        lineare_function = None
-        if self.velocity['x'] != 0:
-            lineare_function = self.get_linear_function(new_position)
-        self.pos, cost = self.check_route(lineare_function, new_position)
+        new_position = self.get_new_position(self.pos.copy(), self.velocity)
+        self.pos, cost = self.process_change_state(self.velocity, new_position, self.pos.copy())
+        if stochastic_movement:
+            self.pos, cost = self.get_stochastic_movement(self.pos, cost)
         return cost
+
+    def process_change_state(self, velocity, new_position, old_position):
+        lineare_function = None
+        if velocity['x'] != 0:
+            lineare_function = self.get_linear_function(new_position, old_position)
+        return self.check_route(lineare_function, new_position, old_position, velocity)
 
     def get_new_velocity(self, action: tuple):
         new_velocity = self.velocity.copy()
@@ -118,23 +120,29 @@ class Game:
             ]
             return selectable_actions
 
-    def check_route(self, linear_function, new_pos):
+    def check_route(self, linear_function, new_pos, old_pos, velocity):
         cost = 1
         cost_penalty = 6
-        min_x = min(new_pos['x'], self.pos['x'])
-        max_x = max(new_pos['x'], self.pos['x'])
-        min_y = min(new_pos['y'], self.pos['y'])
-        max_y = max(new_pos['y'], self.pos['y'])
 
-        if self.velocity['x'] == 0:
-            for y in range(min_y, max_y):
-                pos = {"x": self.pos['x'], "y": y}
-                pos, escaped, collision_detected = self.make_checks(pos)
+        min_x = min(new_pos['x'], old_pos['x'])
+        max_x = max(new_pos['x'], old_pos['x'])
+
+        min_y = min(new_pos['y'], old_pos['y'])
+        max_y = max(new_pos['y'], old_pos['y'])
+
+        last_pos_without_collision = old_pos
+        if velocity['x'] == 0:
+            # In case that min_y is negative we need to start at last valid pos
+            for y in reversed(range(min_y, max_y+1)):
+                pos = {"x": old_pos['x'], "y": y}
+                pos, escaped, collision_detected = self.make_checks(pos, last_pos_without_collision)
                 if escaped:
                     return pos, cost
                 if collision_detected:
                     self.num_collision += 1
                     return pos, cost_penalty
+                else:
+                    last_pos_without_collision = pos
         else:
             sampling_rate = 100
             x_range = numpy.linspace(min_x, max_x, num=sampling_rate)
@@ -142,72 +150,73 @@ class Game:
                 #  Round x and y for this function
                 y = int(linear_function(x))
                 pos = {"x": int(x), "y": y}
-                pos, escaped, collision_detected = self.make_checks(pos)
+                pos, escaped, collision_detected = self.make_checks(pos, last_pos_without_collision)
                 if escaped:
                     return pos, cost
                 if collision_detected:
                     self.num_collision += 1
                     return pos, cost_penalty
+                else:
+                    last_pos_without_collision = pos
         return new_pos, cost
 
-    def make_checks(self, pos):
+    def make_checks(self, pos, last_pos_without_collision):
         is_Collision = None
         if not self.check_in_range(pos):
-            raise ValueError("Error in Make_checks! Array out of bounds")
+            return last_pos_without_collision, self.check_escape(pos), is_Collision
         if self.check_collision(pos):
-            next_pos, is_Collision = self.find_next_pos(pos)
-            pos = self.fix_collision(next_pos, is_Collision)
+            is_Collision = self.find_collision_side(pos)
+            pos = self.fix_collision(is_Collision, last_pos_without_collision)
+            if is_Collision == 'On-X':
+                pos = self._change_pos_in_x(pos)
+            elif is_Collision == 'On-Y':
+                pos = self._change_pos_in_y(pos)
+
         return pos, self.check_escape(pos), is_Collision
 
     # is_Collision tells if collision is on X or Y boarder
-    def fix_collision(self, pos, is_Collision):
-        new_pos_positive_x = {"x": pos['x'] + 1, "y": pos['y']}
-        new_pos_negative_x = {"x": pos['x'] - 1, "y": pos['y']}
-        new_pos_positive_y = {"x": pos['x'], "y": pos['y'] + 1}
-        new_pos_negative_y = {"x": pos['x'], "y": pos['y'] - 1}
-
-        if not self.check_collision(new_pos_positive_x) and (is_Collision == 'On-X' or self.velocity['x'] == 0):
+    def fix_collision(self, is_Collision, last_pos_without_collision):
+        if is_Collision == 'On-X':
             self.velocity = {"x": 1, "y": 0}
-            return new_pos_positive_x
-        elif not self.check_collision(new_pos_negative_x) and (is_Collision == 'On-X' or self.velocity['x'] == 0):
-            self.velocity = {"x": -1, "y": 0}
-            return new_pos_negative_x
-        elif not self.check_collision(new_pos_negative_y) and is_Collision == 'On-Y':
-            self.velocity = {"x": 0, "y": -1}
-            return  new_pos_negative_y
-        elif not self.check_collision(new_pos_positive_y) and is_Collision == 'On-Y':
+            return last_pos_without_collision
+        elif is_Collision == 'On-Y':
             self.velocity = {"x": 0, "y": 1}
-            return new_pos_positive_y
-        else:
-            raise ValueError("Did not managed to avoid wall")
+            return last_pos_without_collision
 
     # Finds pos which is next to the boarder of the collision
-    def find_next_pos(self, pos):
+    def find_collision_side(self, pos):
         #  Check if we have collision on X or Y
-        if self.check_collision({'x': pos['x']+1,'y': pos['y']}) or self.check_collision({'x': pos['x']-1, 'y': pos['y']}):
-            is_Collision = "On-X"
-            return self._check_temp_pos_positive_in_y(pos), is_Collision
-        elif self.check_collision({'x': pos['x'],'y': pos['y']+1}) or self.check_collision({'x': pos['x'], 'y': pos['y']-1}):
+        pos_x_positive = {'x': pos['x']+1,'y': pos['y']}
+        pos_x_negative = {'x': pos['x']-1, 'y': pos['y']}
+        pos_y_positive = {'x': pos['x'],'y': pos['y']+1}
+        pos_y_negative = {'x': pos['x'], 'y': pos['y']-1}
+        if (self.check_in_range(pos_x_positive) and not self.check_collision(pos_x_positive)) \
+                or (self.check_in_range(pos_x_negative) and not self.check_collision(pos_x_negative)):
             is_Collision = "On-Y"
-            return self._check_temp_pos_positive_in_x(pos), is_Collision
+            return is_Collision
+            #return self._check_temp_pos_positive_in_y(pos), is_Collision
+        elif (self.check_in_range(pos_y_positive) and not self.check_collision(pos_y_positive)) \
+                or (self.check_in_range(pos_y_negative) and not self.check_collision(pos_y_negative)):
+            is_Collision = "On-X"
+            return is_Collision
         else:
             raise ValueError("Failed to detect boarder")
 
     # Determine in which direction the fight should be move after initial collision
     # This function takes the figheter off the wall and puts it directly next to it
-    def _check_temp_pos_positive_in_y(self, pos):
+    def _change_pos_in_y(self, pos):
         temp_pos_positiv = {"x": pos['x'], "y": pos['y'] + 1}
         temp_pos_negative = {"x": pos['x'], "y": pos['y'] - 1}
-        if self.check_in_range(temp_pos_positiv) and not self.check_collision(temp_pos_positiv):
-            return temp_pos_positiv
-        elif self.check_in_range(temp_pos_negative) and not self.check_collision(temp_pos_negative):
+        if self.check_in_range(temp_pos_negative) and not self.check_collision(temp_pos_negative):
             return temp_pos_negative
+        elif self.check_in_range(temp_pos_positiv) and not self.check_collision(temp_pos_positiv):
+            return temp_pos_positiv
         else:
             raise ValueError("No space found next to collision")
 
     # Determine in which direction the fight should be move after initial collision
-    # This function takes the figheter off the wall and puts it directly next to it
-    def _check_temp_pos_positive_in_x(self, pos):
+    # This function takes the fighter off the wall and puts it directly next to it
+    def _change_pos_in_x(self, pos):
         temp_pos_positiv = {"x": pos['x'] + 1, "y": pos['y']}
         temp_pos_negative = {"x": pos['x'] - 1, "y": pos['y']}
         if self.check_in_range(temp_pos_positiv) and not self.check_collision(temp_pos_positiv):
@@ -233,11 +242,27 @@ class Game:
         old_position['y'] -= velocity['y']
         return old_position
 
-    def get_linear_function(self, new_pos):
-        print(new_pos['x'])
-        print(self.pos['x'])
-        m = (new_pos['y'] - self.pos['y']) / (new_pos['x'] - self.pos['x'])
-        b = self.pos['y']-( m * self.pos['x'])
+    def get_stochastic_movement(self, old_pos, cost):
+        # Determine if a stochastic steps should occure
+        if random.random() < 0.5:
+            return old_pos, cost
+
+        # Determine in which direction a stochastic step should occure
+        if random.random() < 0.5:
+            velocity = {'x': 1, 'y':0}
+            new_position = self.get_new_position(old_pos.copy(), velocity)
+            new_position, stochastic_cost = self.process_change_state(velocity, new_position, old_pos)
+        else:
+            velocity = {'x': 0, 'y': 1}
+            new_position = self.get_new_position(old_pos.copy(), velocity)
+            new_position, stochastic_cost =  self.process_change_state(velocity, new_position, old_pos)
+        if cost <= stochastic_cost:
+            cost = stochastic_cost
+        return new_position, cost
+
+    def get_linear_function(self, new_pos, old_pos):
+        m = (new_pos['y'] - old_pos['y']) / (new_pos['x'] - old_pos['x'])
+        b = old_pos['y']-( m * old_pos['x'])
         return lambda x: m*x + b
 
     def get_state(self):

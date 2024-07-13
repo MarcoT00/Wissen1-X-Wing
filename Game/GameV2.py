@@ -60,13 +60,16 @@ class Game:
         self,
         selected_action: tuple,
         stochastic_movement=False,
+        require_stochastic_next_state=False
     ):
         self.timestep += 1
         self.velocity = self.get_new_velocity(selected_action)
         new_position = self.get_new_position(self.pos.copy(), self.velocity)
         self.pos, cost = self.process_change_state(self.velocity, new_position, self.pos.copy())
         if stochastic_movement:
-            self.pos, cost = self.get_stochastic_movement(self.pos, cost)
+            self.pos, cost = self.get_stochastic_movement(self.pos, cost, require_stochastic_next_state)
+        if self.check_collision(self.pos):
+            raise Exception()
         return cost
 
     def process_change_state(self, velocity, new_position, old_position):
@@ -158,6 +161,10 @@ class Game:
                     return pos, cost_penalty
                 else:
                     last_pos_without_collision = pos
+
+        # Doe to floating point error this is needed -_- (10, 8, (3,1))
+        if self.check_collision(new_pos):
+            new_pos = last_pos_without_collision
         return new_pos, cost
 
     def make_checks(self, pos, last_pos_without_collision):
@@ -229,7 +236,7 @@ class Game:
     def check_in_range(self, pos):
         X_SIZE = len(self.MAP[0])
         Y_SIZE = len(self.MAP)
-        return 0 <= pos['x'] <= X_SIZE and 0 <= pos['y'] < Y_SIZE
+        return 0 <= pos['x'] < X_SIZE and 0 <= pos['y'] < Y_SIZE
 
     def check_escape(self, pos):
         return self.MAP[pos['y']][pos['x']] == "Z"
@@ -242,10 +249,11 @@ class Game:
         old_position['y'] -= velocity['y']
         return old_position
 
-    def get_stochastic_movement(self, old_pos, cost):
+    def get_stochastic_movement(self, old_pos, cost, require_stochastic_next_state):
         # Determine if a stochastic steps should occure
-        if random.random() < 0.5:
-            return old_pos, cost
+        if not require_stochastic_next_state:
+            if random.random() < 0.5:
+                return old_pos, cost
 
         # Determine in which direction a stochastic step should occure
         if random.random() < 0.5:
@@ -255,7 +263,7 @@ class Game:
         else:
             velocity = {'x': 0, 'y': 1}
             new_position = self.get_new_position(old_pos.copy(), velocity)
-            new_position, stochastic_cost =  self.process_change_state(velocity, new_position, old_pos)
+            new_position, stochastic_cost = self.process_change_state(velocity, new_position, old_pos)
         if cost <= stochastic_cost:
             cost = stochastic_cost
         return new_position, cost

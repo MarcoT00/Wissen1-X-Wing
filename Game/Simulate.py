@@ -61,7 +61,7 @@ class Simulate:
             cost = game.change_state(action, stochastic_movement)
             flight_cost += cost
             game.update_player(flight_cost)
-            time.sleep(1)
+            # time.sleep(1)
         time.sleep(10)
         return flight_cost
 
@@ -87,8 +87,8 @@ class Simulate:
 s = Simulate(
     map_id=1,
     start_pos_index=0,
-    num_flight=1,
-    stochastic_movement=False,
+    num_flight=100,
+    stochastic_movement=True,
     folder_name="optimal_policies",
     iteration=None,
 )

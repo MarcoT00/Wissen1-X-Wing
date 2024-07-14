@@ -375,14 +375,14 @@ class Agent:
                 deterministic_next_state = self.game.get_state()
                 if stochastic_movement:
                     self.game.reset_to_original_state()
-                    self.game.change_state(
+                    stochastic_cost = self.game.change_state(
                         action,
                         stochastic_movement=True,
                         require_stochastic_next_state=True,
                     )
                     stochastic_next_state = self.game.get_state()
                     action_costs[action] = 0.5 * (
-                        cost + value_function[stochastic_next_state]
+                        stochastic_cost + value_function[stochastic_next_state]
                     ) + 0.5 * (cost + value_function[deterministic_next_state])
                 else:
                     action_costs[action] = (

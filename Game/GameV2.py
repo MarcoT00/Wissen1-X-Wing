@@ -151,8 +151,8 @@ class Game:
             x_range = numpy.linspace(min_x, max_x, num=sampling_rate)
             for x in x_range:
                 #  Round x and y for this function
-                y = int(linear_function(x))
-                pos = {"x": int(x), "y": y}
+                y = round(linear_function(x))
+                pos = {"x": round(x), "y": y}
                 pos, escaped, collision_detected = self.make_checks(pos, last_pos_without_collision)
                 if escaped:
                     return pos, cost
@@ -162,7 +162,7 @@ class Game:
                 else:
                     last_pos_without_collision = pos
 
-        # Doe to floating point error this is needed -_- (10, 8, (3,1))
+        # Doe to floating point error this is needed -_- (10,7 (0,1)) -> (10, 8, (3,1))
         if self.check_collision(new_pos):
             new_pos = last_pos_without_collision
         return new_pos, cost

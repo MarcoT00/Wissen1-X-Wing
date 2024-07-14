@@ -18,13 +18,13 @@ def worker(start_pos_index):
 
 if __name__ == "__main__":
     start_time = time.time()
-    max_workers = os.cpu_count() - 1
+    max_workers = os.cpu_count()-1
     star_pos_list = list(range(6))
 
     with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
-        try:
-            concurrent.futures.wait(executor.map(worker, star_pos_list))
-        except Exception as ex:
-            print(ex)
+        #try:
+        concurrent.futures.wait(executor.map(worker, star_pos_list))
+        #except Exception as ex:
+            #print(ex)
 
     print("--- %s seconds ---" % (time.time() - start_time))

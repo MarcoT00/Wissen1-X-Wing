@@ -5,8 +5,6 @@ import os
 from multiprocessing import Queue
 
 MAP = 1
-MAP = 1
-
 
 def worker(start_pos_index):
     return Agent(

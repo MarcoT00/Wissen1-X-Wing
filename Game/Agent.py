@@ -1,4 +1,4 @@
-from Game import Game
+from GameV2 import Game
 from Topology import Topology
 import json
 from itertools import accumulate
@@ -43,7 +43,7 @@ class Agent:
             start_pos_index,
             stochastic_movement,
             policy=optimal_policy,
-            folder_name="optimal_policies",
+            folder_name="optimal_policiesV2",
             iteration=None,
         )
 

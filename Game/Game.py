@@ -113,8 +113,7 @@ class Game:
         return cost
 
     def get_velocity_after_collision(self, possible_mvmt_seq: list):
-        # Each elem of each sequence is one of the following types:
-        # (x, 1), (y, 1): Right, Up
+        # Each elem of each sequence is one of the following types: (x, 1), (y, 1)
         # All sequences have at least one type and at most two types
         # Last elem in a movement sequence is the movement that causes collision
         match possible_mvmt_seq[-1]:
@@ -137,7 +136,7 @@ class Game:
         Route: sequence of cells until no movement left or the agent has reached R or Z
         """
 
-        # Get possible movement sequences
+        # Extract movement sequence from given velocity
         if velocity["x"] == 0 or velocity["y"] == 0:
             num_x_moves = abs(velocity["x"])
             num_y_moves = abs(velocity["y"])
@@ -176,8 +175,7 @@ class Game:
                     movement_seq.append(("y", 1))
                 previous_pair = pair
 
-        # From possible movement sequences, extract the possible routes
-        # For each movement sequence, stop extracting when reaching R or Z
+        # Get possible route and possible movement sequence from the above movement sequence
         possible_route = [
             (
                 current_pos,

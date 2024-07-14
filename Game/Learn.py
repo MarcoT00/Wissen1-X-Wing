@@ -12,15 +12,22 @@ def worker(start_pos_index):
     return Agent(
         map_id=MAP,
         start_pos_index=start_pos_index,
-        num_episode=1,  # 100
-        stochastic_movement=False,  # True
+        num_episode=100,  # 100
+        stochastic_movement=True,  # True
     )
 
 
 if __name__ == "__main__":
     start_time = time.time()
-    max_workers = os.cpu_count() - 1
-    star_pos_list = list(range(6))
+
+    if MAP == 1:
+        max_workers = os.cpu_count() - 1
+        star_pos_list = list(range(1, 6))
+    else:
+        max_workers = int(os.cpu_count()/2)+1
+        star_pos_list = list(range(23))
+
+    print("Max Workers: ", max_workers)
 
     with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
         # try:

@@ -1,5 +1,5 @@
 from Topology import Topology
-from Game import Game
+from GameV2 import Game
 import json
 import time
 import os
@@ -11,12 +11,22 @@ class Simulate:
     policy = None
 
     def __init__(
-        self, map_id, start_pos_index, num_flight, type, folder_name, iteration
+        self,
+        map_id,
+        start_pos_index,
+        num_flight,
+        stochastic_movement,
+        folder_name,
+        iteration,
     ):
         self.num_collision = 0
+        type = "stochastic" if stochastic_movement else "deterministic"
+
         self.policy = self.read_saved_policy(
             type, map_id, start_pos_index, folder_name, iteration
         )
+
+        print(f"Map {map_id}, start pos index {start_pos_index}, {type}")
 
         # n_start = len(Topology.start_positions_map_1)
         start_pos = Topology.get_start_pos(map_id, start_pos_index)
@@ -26,37 +36,35 @@ class Simulate:
             y_pos=start_pos["y"],
             x_speed=0,
             y_speed=0,
-            show_screen=True,
+            # show_screen=True,
         )
         flight_costs = {}
         for i in range(1, 1 + num_flight):
-            flight_costs[i] = self.execute_simulation(game)
-            print(
-                f"{i}-th flight, number of actions leading to collision: {game.num_collision}"
-            )
+            flight_costs[i] = self.execute_simulation(game, stochastic_movement)
+            # print(f"|\t{i}-th flight - Cost: {flight_costs[i]}")
+
             if game.num_collision != 0:
                 self.num_collision += 1
             game.reset_to_original_state()
         print(
-            f"Number of flights in which collision occurred: {self.num_collision}/{num_flight}"
+            f"|---Number of flights in which collision did not occur: {num_flight - self.num_collision}/{num_flight}"
         )
         min_cost = min(flight_costs.values())
-        min_cost_flights = [
-            flight_id for flight_id, cost in flight_costs.items() if cost == min_cost
-        ]
-        print(f"Flight(s) with minimal cost: {min_cost_flights}; Cost: {min_cost}")
+        avg_cost = sum(flight_costs.values()) / len(flight_costs)
+        print(f"|---Minimum Cost: {min_cost}")
+        print(f"|---Average Cost: {avg_cost}")
 
-    def execute_simulation(self, game: Game):
+    def execute_simulation(self, game: Game, stochastic_movement):
         flight_cost = 0
         game.update_screen()
         game.update_player(flight_cost)
         while not game.is_finished():
             action = self.policy[game.get_state()]
-            cost = game.change_state(action)
+            cost = game.change_state(action, stochastic_movement)
             flight_cost += cost
             game.update_player(flight_cost)
-            time.sleep(1)
-        time.sleep(15)
+            # time.sleep(0.2)
+        # time.sleep(10)
         return flight_cost
 
     def read_saved_policy(self, type, map_id, start_pos_index, folder_name, iteration):
@@ -78,11 +86,13 @@ class Simulate:
         return policy
 
 
-s = Simulate(
-    map_id=1,
-    start_pos_index=0,
-    num_flight=1,
-    type="deterministic",
-    folder_name="optimal_policies",
-    iteration=None,
-)
+if __name__ == "__main__":
+    for s in range(0, 1):
+        s = Simulate(
+            map_id=1,
+            start_pos_index=s,
+            num_flight=100000,
+            stochastic_movement=False,
+            folder_name="optimal_policiesV2",
+            iteration=None,
+        )

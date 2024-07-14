@@ -94,6 +94,8 @@ class Game:
                 escape_pos=None,
                 stochastic_movement=stochastic_movement,
                 require_stochastic_next_state=require_stochastic_next_state,
+                possible_route=possible_route,
+                possible_mvmt_seq=possible_mvmt_seq,
             )
             cost = 1 + 5
             self.num_collision += 1
@@ -207,12 +209,22 @@ class Game:
         escape_pos: dict,
         stochastic_movement,
         require_stochastic_next_state,
+        possible_route=None,
+        possible_mvmt_seq=None,
     ):
         if escape_is_possible:
             return escape_pos
         else:
-            new_deter_x_pos = self.pos["x"] + velocity["x"]
-            new_deter_y_pos = self.pos["y"] - velocity["y"]
+            if (
+                possible_route is not None and possible_mvmt_seq is not None
+            ):  # Collision
+                x_move = 0 if possible_mvmt_seq[-1] == ("x", 1) else 1  # ("y", 1)
+                y_move = 1 if possible_mvmt_seq[-1] == ("x", 1) else 0  # ("y", 1)
+                new_deter_x_pos = possible_route[-2][0]["x"] + x_move
+                new_deter_y_pos = possible_route[-2][0]["y"] - y_move
+            else:
+                new_deter_x_pos = self.pos["x"] + velocity["x"]
+                new_deter_y_pos = self.pos["y"] - velocity["y"]
             if not stochastic_movement:  # deterministic movement
                 return {
                     "x": new_deter_x_pos,

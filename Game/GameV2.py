@@ -257,7 +257,11 @@ class Game:
 
         # Determine in which direction a stochastic step should occure
         if random.random() < 0.5:
-            velocity = {'x': 1, 'y':0}
+            #velocity = {'x': 1, 'y':0}
+            if random.random() < 0.5:
+                velocity = {'x': 1, 'y': 0}
+            else:
+                velocity = {'x': -1, 'y': 0}
             new_position = self.get_new_position(old_pos.copy(), velocity)
             new_position, stochastic_cost = self.process_change_state(velocity, new_position, old_pos)
         else:

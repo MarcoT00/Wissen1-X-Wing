@@ -1,4 +1,4 @@
-from GameV2 import Game
+from Game import Game
 from Topology import Topology
 import json
 from itertools import accumulate
@@ -43,7 +43,7 @@ class Agent:
             start_pos_index,
             stochastic_movement,
             policy=optimal_policy,
-            folder_name="optimal_policiesV2",
+            folder_name="optimal_policies_GameV1_AgentV2",
             iteration=None,
         )
 
@@ -84,10 +84,13 @@ class Agent:
             # )
             iteration = 1
 
-        init_flight_cost = self.get_expected_flight_cost(
-            policy, map_id, start_pos, num_episode, stochastic_movement
+        init_flight_cost = round(
+            self.get_expected_cost(
+                policy, map_id, start_pos, num_episode, stochastic_movement
+            ),
+            2,
         )
-        print(f"|\tExpected flight cost with initial policy: {init_flight_cost}")
+        print(f"|\tExpected cost with initial policy: {init_flight_cost}")
 
         optimal_policy_found = False
         min_expected_cost = init_flight_cost
@@ -100,7 +103,7 @@ class Agent:
             print("|\tEvaluating policy...")
             value_function = self.evaluate_policy(
                 num_episode,
-                policy,
+                optimal_policy,
                 init_value_function,
                 init_g,
                 start_pos,
@@ -111,34 +114,51 @@ class Agent:
 
             # Policy Improvement
             print("|\tImproving policy...")
-            previous_policy = policy.copy()
             policy = self.improve_policy(
                 map_id=map_id,
-                policy=policy,
+                policy=optimal_policy,
                 value_function=value_function,
                 stochastic_movement=stochastic_movement,
             )
-            self.game = Game(
-                map_id=map_id,
-                x_pos=start_pos["x"],
-                y_pos=start_pos["y"],
-                x_speed=0,
-                y_speed=0,
+            new_flight_cost = round(
+                self.get_expected_cost(
+                    policy, map_id, start_pos, num_episode, stochastic_movement
+                ),
+                2,
             )
+            print(
+                f"|\tStreak {min_streak}. Expected cost with new policy: {new_flight_cost}. Min expected cost thus far: {min_expected_cost}"
+            )
+
+            while new_flight_cost >= min_expected_cost:
+                policy = self.improve_policy(
+                    map_id=map_id,
+                    policy=optimal_policy,
+                    value_function=value_function,
+                    stochastic_movement=stochastic_movement,
+                )
+                new_flight_cost = round(
+                    self.get_expected_cost(
+                        policy, map_id, start_pos, num_episode, stochastic_movement
+                    ),
+                    2,
+                )
+                min_streak += 1
+                print(
+                    f"|\tStreak {min_streak}. Expected cost with new policy: {new_flight_cost}. Min expected cost thus far: {min_expected_cost}"
+                )
+                if min_streak > 500:
+                    optimal_policy_found = True
+                    break
+
             print("|\tPolicy improvement completed.")
 
             # Calculate changes
             changes = {}
             for state, action in policy.items():
-                if action != previous_policy[state]:
+                if action != optimal_policy[state]:
                     changes[state] = action
-            print(f"|\t{len(changes)} changes from the previous policy")
-
-            # Calculate expected flight cost with new policy
-            new_flight_cost = self.get_expected_flight_cost(
-                policy, map_id, start_pos, num_episode, stochastic_movement
-            )
-            print(f"|\tExpected flight cost with new policy: {new_flight_cost}")
+            print(f"|\t{len(changes)} changes from the previous optimal policy")
 
             if len(changes) == 0:
                 optimal_policy_found = True
@@ -147,10 +167,6 @@ class Agent:
                 min_expected_cost = new_flight_cost
                 optimal_policy = policy.copy()
                 min_streak = 1
-            else:
-                min_streak += 1
-                if min_streak > 500:
-                    optimal_policy_found = True
             print(f"|\tMin expected cost thus far: {min_expected_cost}")
 
             # Save interim results
@@ -158,18 +174,25 @@ class Agent:
             #     map_id,
             #     start_pos_index,
             #     stochastic_movement,
-            #     policy,
+            #     optimal_policy,
             #     interim_folder_name="interim_policies",
             #     iteration=iteration,
             # )
             # self.save_visual(
-            #     policy=policy,
+            #     policy=optimal_policy,
             #     map_id=map_id,
             #     iteration=iteration,
             #     stochastic_movement=stochastic_movement,
             #     start_pos_index=start_pos_index,
             # )
 
+            self.game = Game(
+                map_id=map_id,
+                x_pos=start_pos["x"],
+                y_pos=start_pos["y"],
+                x_speed=0,
+                y_speed=0,
+            )
             iteration += 1
 
         return optimal_policy
@@ -403,7 +426,7 @@ class Agent:
             greedy_policy[state] = best_action
         return greedy_policy
 
-    def get_expected_flight_cost(
+    def get_expected_cost(
         self, policy, map_id, start_pos, num_episode, stochastic_movement
     ):
         expected_flight_cost = 0

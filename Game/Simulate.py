@@ -1,5 +1,5 @@
 from Topology import Topology
-from GameV2 import Game
+from Game import Game
 import json
 import time
 import os
@@ -87,12 +87,12 @@ class Simulate:
 
 
 if __name__ == "__main__":
-    for s in range(0, 6):
+    for s in range(0, 1):
         s = Simulate(
             map_id=1,
             start_pos_index=s,
             num_flight=100000,
             stochastic_movement=True,
-            folder_name="optimal_policiesV2",
+            folder_name="optimal_policiesV1",
             iteration=None,
         )

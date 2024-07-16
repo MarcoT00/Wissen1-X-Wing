@@ -155,7 +155,7 @@ class Agent:
                 min_streak = 1
             else:
                 min_streak += 1
-                if min_streak > 500:
+                if min_streak > 250:
                     optimal_policy_found = True
             print(f"|\tMinimal expected flight cost thus far: {min_expected_cost}")
 

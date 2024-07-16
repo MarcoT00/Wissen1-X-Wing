@@ -1,10 +1,10 @@
-from Agent import Agent
+from Game.AgentV1 import Agent
 import concurrent.futures
 import time
 import os
-from multiprocessing import Queue
 
 MAP = 1
+
 
 def worker(start_pos_index):
     return Agent(
@@ -22,7 +22,7 @@ if __name__ == "__main__":
         max_workers = os.cpu_count() - 1
         star_pos_list = list(range(1, 6))
     else:
-        max_workers = int(os.cpu_count()/2)+1
+        max_workers = int(os.cpu_count() / 2) + 1
         star_pos_list = list(range(23))
 
     print("Max Workers: ", max_workers)

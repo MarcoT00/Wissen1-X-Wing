@@ -84,8 +84,11 @@ class Agent:
             # )
             iteration = 1
 
-        init_flight_cost = self.get_expected_flight_cost(
-            policy, map_id, start_pos, num_episode, stochastic_movement
+        init_flight_cost = round(
+            self.get_expected_flight_cost(
+                policy, map_id, start_pos, num_episode, stochastic_movement
+            ),
+            2,
         )
         print(f"|\tExpected flight cost with initial policy: {init_flight_cost}")
 
@@ -135,8 +138,11 @@ class Agent:
             print(f"|\t{len(changes)} changes from the previous policy")
 
             # Calculate expected flight cost with new policy
-            new_flight_cost = self.get_expected_flight_cost(
-                policy, map_id, start_pos, num_episode, stochastic_movement
+            new_flight_cost = round(
+                self.get_expected_flight_cost(
+                    policy, map_id, start_pos, num_episode, stochastic_movement
+                ),
+                2,
             )
             print(f"|\tExpected flight cost with new policy: {new_flight_cost}")
 

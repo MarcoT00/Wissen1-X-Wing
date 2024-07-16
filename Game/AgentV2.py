@@ -72,7 +72,7 @@ class Agent:
             #     start_pos_index,
             #     stochastic_movement,
             #     policy,
-            #     interim_folder_name,
+            #     interim_folder_name="interim_policies",
             #     iteration=0,
             # )
             # self.save_visual(
@@ -149,7 +149,7 @@ class Agent:
                 min_streak = 1
             else:
                 min_streak += 1
-                if min_streak > 500:
+                if min_streak > 250:
                     optimal_policy_found = True
             print(f"|\tMin expected cost thus far: {min_expected_cost}")
 
@@ -159,7 +159,7 @@ class Agent:
             #     start_pos_index,
             #     stochastic_movement,
             #     policy,
-            #     interim_folder_name,
+            #     interim_folder_name="interim_policies",
             #     iteration=iteration,
             # )
             # self.save_visual(

@@ -454,7 +454,7 @@ class Agent:
 
 
 if __name__ == "__main__":
-    for s in range(0, 1):
+    for s in range(1, 6):
         Agent(
             start_pos_index=s,
             map_id=1,

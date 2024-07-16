@@ -1,5 +1,5 @@
 from Topology import Topology
-from GameV2 import Game
+from GameV1 import Game
 import json
 import time
 import os
@@ -50,7 +50,7 @@ class Simulate:
             f"|---Number of flights in which collision did not occur: {num_flight - self.num_collision}/{num_flight}"
         )
         min_cost = min(flight_costs.values())
-        avg_cost = sum(flight_costs.values()) / len(flight_costs)
+        avg_cost = round(sum(flight_costs.values()) / len(flight_costs), 2)
         print(f"|---Minimum Cost: {min_cost}")
         print(f"|---Average Cost: {avg_cost}")
 
@@ -87,12 +87,12 @@ class Simulate:
 
 
 if __name__ == "__main__":
-    for s in range(0, 1):
+    for s in range(0, 6):
         s = Simulate(
             map_id=1,
             start_pos_index=s,
             num_flight=100000,
             stochastic_movement=True,
-            folder_name="optimal_policiesV1",
+            folder_name="optimal_policies_V1",
             iteration=None,
         )

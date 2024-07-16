@@ -1,5 +1,5 @@
 from Topology import Topology
-from Game import Game
+from GameV2 import Game
 import json
 import time
 import os

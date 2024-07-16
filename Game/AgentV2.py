@@ -43,7 +43,7 @@ class Agent:
             start_pos_index,
             stochastic_movement,
             policy=optimal_policy,
-            folder_name="optimal_policiesV2",
+            folder_name="optimal_policies_V2",
             iteration=None,
         )
 
@@ -84,8 +84,11 @@ class Agent:
             # )
             iteration = 1
 
-        init_flight_cost = self.get_expected_flight_cost(
-            policy, map_id, start_pos, num_episode, stochastic_movement
+        init_flight_cost = round(
+            self.get_expected_flight_cost(
+                policy, map_id, start_pos, num_episode, stochastic_movement
+            ),
+            2,
         )
         print(f"|\tExpected flight cost with initial policy: {init_flight_cost}")
 
@@ -135,8 +138,11 @@ class Agent:
             print(f"|\t{len(changes)} changes from the previous policy")
 
             # Calculate expected flight cost with new policy
-            new_flight_cost = self.get_expected_flight_cost(
-                policy, map_id, start_pos, num_episode, stochastic_movement
+            new_flight_cost = round(
+                self.get_expected_flight_cost(
+                    policy, map_id, start_pos, num_episode, stochastic_movement
+                ),
+                2,
             )
             print(f"|\tExpected flight cost with new policy: {new_flight_cost}")
 
@@ -394,10 +400,11 @@ class Agent:
                 actions_with_min_cost = [
                     action for action, cost in action_costs.items() if cost == min_cost
                 ]
-                if policy[state] in actions_with_min_cost:
-                    best_action = policy[state]
-                else:
-                    best_action = random.choice(actions_with_min_cost)
+                best_action = (
+                    policy[state]
+                    if policy[state] in actions_with_min_cost
+                    else random.choice(actions_with_min_cost)
+                )
             else:
                 best_action = policy[state]
             greedy_policy[state] = best_action

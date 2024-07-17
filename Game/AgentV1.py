@@ -391,13 +391,9 @@ class Agent:
                             require_stochastic_next_state=True,
                         )
                         stoc_next_state = self.game.get_state()
-                        stoc_cost_collision = 0 if stoc_cost == 0 else 6
-                        action_costs[action] = (
-                            0.25 * (stoc_cost + value_function[stoc_next_state])
-                            + 0.25
-                            * (stoc_cost_collision + value_function[stoc_next_state])
-                            + 0.5 * (deter_cost + value_function[deter_next_state])
-                        )
+                        action_costs[action] = 0.5 * (
+                            stoc_cost + value_function[stoc_next_state]
+                        ) + 0.5 * (deter_cost + value_function[deter_next_state])
                     else:
                         stoc_cost_right = self.game.change_state(
                             action,

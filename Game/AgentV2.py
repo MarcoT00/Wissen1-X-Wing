@@ -435,6 +435,6 @@ if __name__ == "__main__":
             start_pos_index=s,
             map_id=1,
             stochastic_movement=True,
-            num_episode=100,
+            num_episode=1000,
             continue_from_last_interim=False,
         )

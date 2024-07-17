@@ -391,9 +391,13 @@ class Agent:
                             require_stochastic_next_state=True,
                         )
                         stoc_next_state = self.game.get_state()
-                        action_costs[action] = 0.5 * (
-                            stoc_cost + value_function[stoc_next_state]
-                        ) + 0.5 * (deter_cost + value_function[deter_next_state])
+                        stoc_cost_collision = 0 if stoc_cost == 0 else 6
+                        action_costs[action] = (
+                            0.25 * (stoc_cost + value_function[stoc_next_state])
+                            + 0.25
+                            * (stoc_cost_collision + value_function[stoc_next_state])
+                            + 0.5 * (deter_cost + value_function[deter_next_state])
+                        )
                     else:
                         stoc_cost_right = self.game.change_state(
                             action,
@@ -454,11 +458,11 @@ class Agent:
 
 
 if __name__ == "__main__":
-    for s in range(1, 6):
+    for s in range(0, 6):
         Agent(
             start_pos_index=s,
             map_id=1,
             stochastic_movement=True,
-            num_episode=100,
+            num_episode=1000,
             continue_from_last_interim=False,
         )

@@ -168,7 +168,7 @@ class Agent:
             #     start_pos_index,
             #     stochastic_movement,
             #     policy,
-            #     interim_folder_name="interim_policies",
+            #     folder_name="interim_policies",
             #     iteration=iteration,
             # )
             # self.save_visual(
@@ -206,19 +206,24 @@ class Agent:
                 if self.game.MAP[row][col] in ["S", "X", "Z"]:
                     for x_speed in range(0, 5):
                         for y_speed in range(0, 5):
-                            state = (
-                                col,  # x
-                                row,  # y
-                                (x_speed, y_speed),  # velocity
-                            )
-                            turning_row = 8 if map_id == 1 else 14
-                            if row >= turning_row:
-                                action = ("H", "B")
-                            else:
-                                action = ("B", "V")
-                            policy[state] = action
-                            init_value_function[state] = 0
-                            init_g[state] = 0
+                            if x_speed != 0 or y_speed != 0:
+                                state = (
+                                    col,  # x
+                                    row,  # y
+                                    (x_speed, y_speed),  # velocity
+                                )
+                                turning_row = 8 if map_id == 1 else 14
+                                if row >= turning_row:
+                                    action = ("H", "B")
+                                else:
+                                    action = ("B", "V")
+                                policy[state] = action
+                                init_value_function[state] = 0
+                                init_g[state] = 0
+        start_state = (start_pos["x"], start_pos["y"], (0, 0))
+        policy[start_state] = ("H", "B")
+        init_value_function[start_state] = 0
+        init_g[start_state] = 0
         return policy, init_value_function, init_g, start_pos
 
     def read_last_interim_policy(
@@ -438,8 +443,7 @@ class Agent:
             #     if policy[state] in actions_with_min_cost
             #     else actions_with_min_cost[0]
             # )
-            # print(action_costs)
-            # if state == (9, 8, (0, 4)):
+            # if state == (4, 32, (0, 0)):
             #     print(state)
             #     print(action_costs)
             #     print(best_action)
@@ -466,11 +470,12 @@ class Agent:
 
 
 if __name__ == "__main__":
-    for s in range(0, 6):
+    for s in range(0, 23):
         Agent(
             start_pos_index=s,
-            map_id=1,
+            map_id=2,
             stochastic_movement=True,
-            num_episode=2000,  # Map 1: 2000; Map 2: 10000
-            streak_limit=150,
+            num_episode=10000,  # Map 1: 2000; Map 2: 10000
+            streak_limit=10,
+            continue_from_last_interim=False,
         )

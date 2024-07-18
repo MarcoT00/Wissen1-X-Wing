@@ -8,14 +8,14 @@ class Game:
     # Params that do not change after each episode
     # (x,y)
     ACTIONS = [
-        ("B", "B"),
-        ("B", "H"),  # Right
-        ("B", "V"),
         ("H", "B"),  # UP
-        ("H", "H"),
-        ("H", "V"),  # Down
         ("V", "B"),
+        ("B", "V"),
+        ("B", "H"),  # Right
+        ("B", "B"),
+        ("H", "V"),  # Down
         ("V", "H"),  # Left
+        ("H", "H"),
         ("V", "V"),
     ]
     MAP = None
@@ -23,7 +23,6 @@ class Game:
     START_VELOCITY = None
 
     # Params that change after each episode
-    timestep = None
     velocity = None
     pos = None
     num_collision = None
@@ -35,7 +34,6 @@ class Game:
         self.START_VELOCITY = {"x": x_speed, "y": y_speed}
         self.SHOW_SCREEN = show_screen
 
-        self.timestep = 0
         self.velocity = self.START_VELOCITY.copy()
         self.pos = self.START_POS.copy()
         self.num_collision = 0
@@ -48,7 +46,6 @@ class Game:
         """
         Reset the game to original state (when game is initialized)
         """
-        self.timestep = 0
         self.velocity = self.START_VELOCITY.copy()
         self.pos = self.START_POS.copy()
         self.num_collision = 0
@@ -62,7 +59,8 @@ class Game:
         require_stochastic_next_state=False,
         stochastic_type=None,
     ):
-        self.timestep += 1
+        if self.is_finished():
+            return 0
 
         # Get new velocity based on selected action
         new_velocity = self.get_new_velocity(selected_action)
@@ -72,9 +70,7 @@ class Game:
             current_pos=self.pos, velocity=new_velocity
         )
 
-        if self.MAP[self.pos["y"]][self.pos["x"]] == "Z":
-            return 0
-        elif self.escape_is_possible(possible_route):
+        if self.escape_is_possible(possible_route):
             self.velocity = new_velocity
             self.pos = self.get_new_pos(
                 escape_is_possible=True,
@@ -307,17 +303,28 @@ class Game:
         return new_velocity
 
     def get_selectable_actions(self):
-        if self.is_finished():
-            return []
-        elif (
+        if (
             self.MAP[self.pos["y"]][self.pos["x"]] == "S"
             and self.velocity["x"] == 0
             and self.velocity["y"] == 0
-        ) or self.MAP[self.pos["y"]][self.pos["x"]] == "Z":
-            return self.ACTIONS
+        ):
+            return [
+                ("B", "B"),
+                ("B", "H"),
+                ("H", "B"),
+            ]
         else:
             velocity_prediction = {}
-            for a in self.ACTIONS:
+            non_selectable_actions = []
+            if self.velocity["x"] == 0:
+                non_selectable_actions.extend([a for a in self.ACTIONS if a[0] == "V"])
+            elif self.velocity["x"] == 4:
+                non_selectable_actions.extend([a for a in self.ACTIONS if a[0] == "B"])
+            if self.velocity["y"] == 0:
+                non_selectable_actions.extend([a for a in self.ACTIONS if a[1] == "V"])
+            elif self.velocity["y"] == 4:
+                non_selectable_actions.extend([a for a in self.ACTIONS if a[1] == "B"])
+            for a in [a for a in self.ACTIONS if a not in non_selectable_actions]:
                 velocity_prediction[a] = self.get_new_velocity(a)
             return [
                 a

@@ -20,9 +20,10 @@ class Agent:
         map_id,
         stochastic_movement,
         num_episode,
+        streak_limit,
         continue_from_last_interim=False,
     ):
-        print("Commencing Battle of Yavin!\n")
+        print("\nCommencing Battle of Yavin!\n")
         print(f"Entering start position {start_pos_index} in map {map_id}...")
         print("Calculating shortest path to fire position...")
 
@@ -32,6 +33,7 @@ class Agent:
             num_episode,
             stochastic_movement,
             continue_from_last_interim,
+            streak_limit,
         )
 
         print(
@@ -52,8 +54,9 @@ class Agent:
         map_id,
         start_pos_index,
         num_episode,
-        stochastic_movement=False,
-        continue_from_last_interim=False,
+        stochastic_movement,
+        continue_from_last_interim,
+        streak_limit,
     ):
         policy, init_value_function, init_g, start_pos = self.initialize(
             map_id, start_pos_index
@@ -94,7 +97,7 @@ class Agent:
 
         optimal_policy_found = False
         min_expected_cost = init_flight_cost
-        min_streak = 1
+        streak = 1
         optimal_policy = policy.copy()
         while not optimal_policy_found:
             print(f"|---Iteration {iteration}:")
@@ -152,10 +155,10 @@ class Agent:
             elif new_flight_cost < min_expected_cost:
                 min_expected_cost = new_flight_cost
                 optimal_policy = policy.copy()
-                min_streak = 1
+                streak = 1
             else:
-                min_streak += 1
-                if min_streak > 250:
+                streak += 1
+                if streak > streak_limit:
                     optimal_policy_found = True
             print(f"|\tMinimal expected flight cost thus far: {min_expected_cost}")
 
@@ -198,8 +201,8 @@ class Agent:
         init_g = {}
         self.X_SIZE = len(self.game.MAP[0])
         self.Y_SIZE = len(self.game.MAP)
-        for row in range(self.Y_SIZE):
-            for col in range(self.X_SIZE):
+        for row in range(1, self.Y_SIZE):
+            for col in range(1, self.X_SIZE):
                 if self.game.MAP[row][col] in ["S", "X", "Z"]:
                     for x_speed in range(0, 5):
                         for y_speed in range(0, 5):
@@ -419,18 +422,27 @@ class Agent:
                 else:
                     action_costs[action] = deter_cost + value_function[deter_next_state]
                 self.game.reset_to_original_state()
-            if action_costs != {}:
-                min_cost = min(action_costs.values())
-                actions_with_min_cost = [
-                    action for action, cost in action_costs.items() if cost == min_cost
-                ]
-                best_action = (
-                    policy[state]
-                    if policy[state] in actions_with_min_cost
-                    else random.choice(actions_with_min_cost)
-                )
-            else:
-                best_action = policy[state]
+            min_cost = min(action_costs.values())
+            actions_with_min_cost = [
+                action for action, cost in action_costs.items() if cost == min_cost
+            ]
+            # best_action = actions_with_min_cost[0]
+            # best_action = random.choice(actions_with_min_cost)
+            best_action = (
+                policy[state]
+                if policy[state] in actions_with_min_cost
+                else random.choice(actions_with_min_cost)
+            )
+            # best_action = (
+            #     policy[state]
+            #     if policy[state] in actions_with_min_cost
+            #     else actions_with_min_cost[0]
+            # )
+            # print(action_costs)
+            # if state == (9, 8, (0, 4)):
+            #     print(state)
+            #     print(action_costs)
+            #     print(best_action)
             greedy_policy[state] = best_action
         return greedy_policy
 
@@ -459,6 +471,6 @@ if __name__ == "__main__":
             start_pos_index=s,
             map_id=1,
             stochastic_movement=True,
-            num_episode=1000,
-            continue_from_last_interim=False,
+            num_episode=2000,  # Map 1: 2000; Map 2: 10000
+            streak_limit=150,
         )

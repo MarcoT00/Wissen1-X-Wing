@@ -371,22 +371,34 @@ class Agent:
             selectable_actions = self.game.get_selectable_actions()
             action_costs = {}
             for action in selectable_actions:
-                cost = self.game.change_state(action)
-                deterministic_next_state = self.game.get_state()
+                deter_cost = self.game.change_state(action)
+                deter_next_state = self.game.get_state()
                 if stochastic_movement:
                     self.game.reset_to_original_state()
-                    stochastic_cost = self.game.change_state(
+                    stoc_cost_right = self.game.change_state(
                         action,
                         stochastic_movement=True,
                         require_stochastic_next_state=True,
+                        stochastic_type="right",
                     )
-                    stochastic_next_state = self.game.get_state()
-                    action_costs[action] = 0.5 * (
-                        stochastic_cost + value_function[stochastic_next_state]
-                    ) + 0.5 * (cost + value_function[deterministic_next_state])
+                    stoc_next_state_right = self.game.get_state()
+                    self.game.reset_to_original_state()
+                    stoc_cost_up = self.game.change_state(
+                        action,
+                        stochastic_movement=True,
+                        require_stochastic_next_state=True,
+                        stochastic_type="up",
+                    )
+                    stoc_next_state_up = self.game.get_state()
+                    action_costs[action] = (
+                            0.25
+                            * (stoc_cost_right + value_function[stoc_next_state_right])
+                            + 0.25 * (stoc_cost_up + value_function[stoc_next_state_up])
+                            + 0.5 * (deter_cost + value_function[deter_next_state])
+                    )
                 else:
                     action_costs[action] = (
-                        cost + value_function[deterministic_next_state]
+                        deter_cost + value_function[deter_next_state]
                     )
                 self.game.reset_to_original_state()
             if action_costs != {}:
@@ -423,10 +435,10 @@ class Agent:
 
 
 if __name__ == "__main__":
-    for s in range(0, 6):
+    for s in range(23):
         Agent(
             start_pos_index=s,
-            map_id=1,
+            map_id=2,
             stochastic_movement=True,
             num_episode=100,
             continue_from_last_interim=False,

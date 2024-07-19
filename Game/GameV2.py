@@ -60,14 +60,15 @@ class Game:
         self,
         selected_action: tuple,
         stochastic_movement=False,
-        require_stochastic_next_state=False
+        require_stochastic_next_state=False,
+        stochastic_type=None
     ):
         self.timestep += 1
         self.velocity = self.get_new_velocity(selected_action)
         new_position = self.get_new_position(self.pos.copy(), self.velocity)
         self.pos, cost = self.process_change_state(self.velocity, new_position, self.pos.copy())
         if stochastic_movement:
-            self.pos, cost = self.get_stochastic_movement(self.pos, cost, require_stochastic_next_state)
+            self.pos, cost = self.get_stochastic_movement(self.pos, cost, require_stochastic_next_state, stochastic_type)
         if self.check_collision(self.pos):
             raise Exception()
         return cost
@@ -147,7 +148,7 @@ class Game:
                 else:
                     last_pos_without_collision = pos
         else:
-            sampling_rate = 100
+            sampling_rate = 40
             x_range = numpy.linspace(min_x, max_x, num=sampling_rate)
             for x in x_range:
                 #  Round x and y for this function
@@ -197,15 +198,15 @@ class Game:
         pos_x_negative = {'x': pos['x']-1, 'y': pos['y']}
         pos_y_positive = {'x': pos['x'],'y': pos['y']+1}
         pos_y_negative = {'x': pos['x'], 'y': pos['y']-1}
-        if (self.check_in_range(pos_x_positive) and not self.check_collision(pos_x_positive)) \
+        if (self.check_in_range(pos_y_positive) and not self.check_collision(pos_y_positive)) \
+                or (self.check_in_range(pos_y_negative) and not self.check_collision(pos_y_negative)):
+            is_Collision = "On-X"
+            return is_Collision
+        elif (self.check_in_range(pos_x_positive) and not self.check_collision(pos_x_positive)) \
                 or (self.check_in_range(pos_x_negative) and not self.check_collision(pos_x_negative)):
             is_Collision = "On-Y"
             return is_Collision
             #return self._check_temp_pos_positive_in_y(pos), is_Collision
-        elif (self.check_in_range(pos_y_positive) and not self.check_collision(pos_y_positive)) \
-                or (self.check_in_range(pos_y_negative) and not self.check_collision(pos_y_negative)):
-            is_Collision = "On-X"
-            return is_Collision
         else:
             raise ValueError("Failed to detect boarder")
 
@@ -249,28 +250,35 @@ class Game:
         old_position['y'] -= velocity['y']
         return old_position
 
-    def get_stochastic_movement(self, old_pos, cost, require_stochastic_next_state):
+    def get_stochastic_movement(self, old_pos, cost, require_stochastic_next_state, stochastic_type):
+        randint = random.random()
+        velocity_right = {'x': 1, 'y': 0}
+        velocity_up = {'x': 0, 'y': 1}
         # Determine if a stochastic steps should occure
         if not require_stochastic_next_state:
-            if random.random() < 0.5:
+            if randint < 0.5:
                 return old_pos, cost
 
-        # Determine in which direction a stochastic step should occure
-        if random.random() < 0.5:
-            #velocity = {'x': 1, 'y':0}
-            if random.random() < 0.5:
-                velocity = {'x': 1, 'y': 0}
-            else:
-                velocity = {'x': -1, 'y': 0}
-            new_position = self.get_new_position(old_pos.copy(), velocity)
-            new_position, stochastic_cost = self.process_change_state(velocity, new_position, old_pos)
+        if stochastic_type is not None:
+            if stochastic_type == 'right':
+                new_position, stochastic_cost = self._stochastic_step(old_pos, velocity_right)
+            if stochastic_type == 'up':
+                new_position, stochastic_cost = self._stochastic_step(old_pos, velocity_up)
         else:
-            velocity = {'x': 0, 'y': 1}
-            new_position = self.get_new_position(old_pos.copy(), velocity)
-            new_position, stochastic_cost = self.process_change_state(velocity, new_position, old_pos)
+            # Determine in which direction a stochastic step should occure
+            if randint < 0.5:
+                new_position, stochastic_cost = self._stochastic_step(old_pos, velocity_right)
+            else:
+                new_position, stochastic_cost = self._stochastic_step(old_pos, velocity_up)
+
         if cost <= stochastic_cost:
             cost = stochastic_cost
         return new_position, cost
+
+    def _stochastic_step(self, old_pos, velocity):
+        new_position = self.get_new_position(old_pos.copy(), velocity)
+        return self.process_change_state(velocity, new_position, old_pos)
+
 
     def get_linear_function(self, new_pos, old_pos):
         m = (new_pos['y'] - old_pos['y']) / (new_pos['x'] - old_pos['x'])

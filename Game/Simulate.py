@@ -91,8 +91,17 @@ if __name__ == "__main__":
         s = Simulate(
             map_id=1,
             start_pos_index=s,
-            num_flight=100000,
+            num_flight=100,
             stochastic_movement=True,
-            folder_name="optimal_policies_V1",
+            folder_name="optimal_policiesV2",
+            iteration=None,
+        )
+    for s in range(0, 23):
+        s = Simulate(
+            map_id=2,
+            start_pos_index=s,
+            num_flight=100,
+            stochastic_movement=True,
+            folder_name="optimal_policiesV2",
             iteration=None,
         )

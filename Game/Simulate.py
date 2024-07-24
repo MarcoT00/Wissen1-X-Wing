@@ -1,5 +1,5 @@
 from Topology import Topology
-from GameV1 import Game
+from GameV2 import Game
 import json
 import time
 import os
@@ -36,7 +36,7 @@ class Simulate:
             y_pos=start_pos["y"],
             x_speed=0,
             y_speed=0,
-            # show_screen=True,
+            show_screen=True,
         )
         flight_costs = {}
         for i in range(1, 1 + num_flight):
@@ -63,8 +63,8 @@ class Simulate:
             cost = game.change_state(action, stochastic_movement)
             flight_cost += cost
             game.update_player(flight_cost)
-            # time.sleep(0.2)
-        # time.sleep(10)
+            #time.sleep(0.3)
+        time.sleep(5)
         return flight_cost
 
     def read_saved_policy(self, type, map_id, start_pos_index, folder_name, iteration):
@@ -91,17 +91,18 @@ if __name__ == "__main__":
         s = Simulate(
             map_id=1,
             start_pos_index=s,
-            num_flight=10000,
+            num_flight=1,
             stochastic_movement=True,
-            folder_name="optimal_policies_V1",
+            folder_name="optimal_policies_V2",
             iteration=None,
         )
     for s in range(0, 23):
         s = Simulate(
             map_id=2,
             start_pos_index=s,
-            num_flight=10000,
+            num_flight=1,
             stochastic_movement=True,
-            folder_name="optimal_policies_V1",
+            folder_name="optimal_policies_V2",
             iteration=None,
         )
+

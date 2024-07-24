@@ -251,12 +251,11 @@ class Game:
         return old_position
 
     def get_stochastic_movement(self, old_pos, cost, require_stochastic_next_state, stochastic_type):
-        randint = random.random()
         velocity_right = {'x': 1, 'y': 0}
         velocity_up = {'x': 0, 'y': 1}
         # Determine if a stochastic steps should occure
         if not require_stochastic_next_state:
-            if randint < 0.5:
+            if random.random() < 0.5:
                 return old_pos, cost
 
         if stochastic_type is not None:
@@ -266,7 +265,7 @@ class Game:
                 new_position, stochastic_cost = self._stochastic_step(old_pos, velocity_up)
         else:
             # Determine in which direction a stochastic step should occure
-            if randint < 0.5:
+            if random.random() < 0.5:
                 new_position, stochastic_cost = self._stochastic_step(old_pos, velocity_right)
             else:
                 new_position, stochastic_cost = self._stochastic_step(old_pos, velocity_up)
